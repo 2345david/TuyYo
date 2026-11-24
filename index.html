@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tú y yo</title>
+<meta name="theme-color" content="#2340c9">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tú y yo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: juguetón y cálido, un juego de sofá para dos con un punto travieso
+   IDEA: una consola de bolsillo compartida con cartuchos de poderes
+   PICTURE: el tablero de Conecta 4 en su carcasa azul, con hielo, bombas y terremotos
+   COLOUR and TYPE: melocotón, azul cobalto, coral (1) y girasol (2), rojo picante; Fredoka + Nunito
+   LAYOUT: una columna móvil: cabecera, jugadores, pestañas, tablero, poderes */
+:root{color-scheme:light dark;--bg:light-dark(#fff1e8,#1a1114);--ink:light-dark(#2b1720,#fbe9e1);--soft:light-dark(#7a5a63,#c6a8ae);--card:light-dark(#ffffff,#2a1c21);--line:light-dark(#f0d6c8,#3d2a30);--box:#2340c9;--box2:#172c94;--hole:light-dark(#fff1e8,#1a1114);--p1:#ff5a4e;--p2:#ffc531;--ok:#1f9d63;--hot:#e0245e;--ice:#8fe3ff}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Nunito,system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:520px;margin:0 auto;padding:16px max(4vw,14px) 40px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+h1{font:700 32px/1.05 Fredoka,sans-serif;margin:0;flex:1;display:flex;align-items:center;gap:8px}
+h2{font:700 22px/1.15 Fredoka,sans-serif;margin:0 0 10px;text-wrap:balance}
+.pill{font-size:13px;font-weight:800;padding:6px 12px;border-radius:99px;background:var(--card);border:1px solid var(--line);white-space:nowrap}
+.pill.on{color:var(--ok)}
+button,input{font:inherit}
+.btn{min-height:48px;padding:0 20px;border-radius:14px;border:0;background:var(--box);color:#fff;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 4px 0 var(--box2)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--box2)}
+.btn.alt{background:var(--card);color:var(--ink);box-shadow:0 4px 0 var(--line);border:1px solid var(--line)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--p1);outline-offset:2px}
+input{width:100%;min-height:48px;padding:0 14px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font-size:16px}
+.code-in{text-transform:uppercase;letter-spacing:.2em;font-weight:800;text-align:center;font-size:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 140px}
+label{display:block;font-weight:800;margin-bottom:6px}
+.muted{color:var(--soft);font-size:14px;margin:8px 0 0}
+.or{text-align:center;color:var(--soft);font-weight:800;margin:14px 0}
+.hide{display:none!important}
+.codebar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.codebar b{font:700 24px Fredoka,sans-serif;letter-spacing:.15em}
+.codebar .sm{min-height:40px;padding:0 14px;font-size:14px;margin-left:auto}
+.players{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
+.pl{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.pl.turn{border-color:currentColor}
+.pl i{flex:none;width:28px;height:28px;border-radius:50%;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18)}
+.pl .n{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.pl .s{font:700 26px Fredoka,sans-serif;margin-left:auto;color:var(--ink)}
+.pl small{display:block;font-size:13px;color:var(--soft);font-weight:700}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:5px;margin-bottom:14px}
+.tabs button{min-height:44px;border:0;border-radius:12px;background:transparent;color:var(--soft);font-weight:800;cursor:pointer}
+.tabs button.on{background:var(--box);color:#fff}
+.ev{min-height:40px;margin-bottom:10px;border-radius:14px;padding:8px 14px;background:var(--ink);color:var(--bg);font-weight:800;font-size:15px;text-align:center}
+.ev:empty{visibility:hidden}
+.ev.pop{animation:pop .4s ease}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.04)}100%{transform:none}}
+.housing{background:linear-gradient(180deg,var(--box),var(--box2));border-radius:24px;padding:10px;box-shadow:0 10px 0 #0f1f6e,0 18px 30px rgba(20,30,90,.25)}
+.housing.shake{animation:shake .5s}
+@keyframes shake{20%,60%{transform:translateX(-6px) rotate(-1deg)}40%,80%{transform:translateX(6px) rotate(1deg)}}
+.board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;touch-action:manipulation}
+.cell{aspect-ratio:1;border-radius:50%;background:var(--hole);box-shadow:inset 0 4px 0 rgba(0,0,0,.25);border:0;padding:0;cursor:pointer;position:relative;overflow:hidden}
+.cell::after{content:"";position:absolute;inset:0;border-radius:50%;transform:scale(0)}
+.cell.a::after{background:var(--p1);transform:scale(1);box-shadow:inset 0 -5px 0 rgba(0,0,0,.2),inset 0 4px 0 rgba(255,255,255,.35)}
+.cell.b::after{background:var(--p2);transform:scale(1);box-shadow:inset 0 -5px 0 rgba(0,0,0,.18),inset 0 4px 0 rgba(255,255,255,.45)}
+.cell.new::after{animation:drop .38s cubic-bezier(.3,1.4,.6,1)}
+.cell.w::after{outline:4px solid #fff;outline-offset:-7px}
+.cell.ice{background:var(--ice);box-shadow:inset 0 4px 0 rgba(0,60,90,.3),0 0 0 2px #fff}
+.board.aim .cell.tg{box-shadow:0 0 0 3px #fff;animation:blink .8s infinite alternate}
+@keyframes blink{to{opacity:.6}}
+@keyframes drop{from{transform:translateY(-420%)}to{transform:none}}
+@media(prefers-reduced-motion:reduce){.cell.new::after,.housing.shake,.ev.pop,.board.aim .cell.tg{animation:none}}
+.status{text-align:center;font:700 20px/1.2 Fredoka,sans-serif;margin:20px 0 12px;min-height:24px}
+.center{display:flex;justify-content:center}
+.powers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
+.pw{min-height:72px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:800;font-size:14px}
+.pw svg{width:26px;height:26px}
+.pw small{font-size:12px;color:var(--soft);font-weight:700}
+.pw.on{border-color:var(--hot);background:light-dark(#ffe4ec,#3a1525)}
+.pw:disabled{opacity:.35;cursor:default}
+.rules{margin-top:14px}
+.rules summary{font-weight:800;cursor:pointer;min-height:44px;display:flex;align-items:center}
+.rules ul{margin:4px 0 0;padding-left:20px;font-size:15px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{min-height:40px;padding:0 14px;border-radius:99px;border:2px solid var(--line);background:var(--card);color:var(--ink);font-weight:800;font-size:14px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.firec{border-color:var(--hot)}.chip.firec.on,.chip.hotc.on{background:var(--hot);border-color:var(--hot);color:#fff}
+.tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:var(--hot);border-radius:99px;padding:2px 9px;margin-left:6px;vertical-align:2px}
+.q{font:700 26px/1.15 Fredoka,sans-serif;margin:4px 0 16px;text-wrap:balance}
+.opts{display:grid;gap:10px}
+.opt{min-height:56px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);font-weight:800;font-size:17px;cursor:pointer;text-align:left;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.opt.me{border-color:var(--box);background:light-dark(#e8ecff,#232b55)}
+.opt .who{margin-left:auto;display:flex;gap:4px}
+.opt .who i{width:16px;height:16px;border-radius:50%}
+.res{border-radius:16px;padding:14px;text-align:center;font:700 22px Fredoka,sans-serif;margin-top:14px}
+.res.y{background:light-dark(#dff6ea,#163526);color:var(--ok)}
+.res.n{background:light-dark(#ffe6e3,#3d1c1a);color:var(--p1)}
+.res small{display:block;font:800 15px/1.4 Nunito,sans-serif;color:var(--ink);margin-top:6px}
+.meter{height:12px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px}
+.meter span{display:block;height:100%;background:linear-gradient(90deg,var(--p1),var(--p2));border-radius:99px}
+.toast{position:fixed;z-index:40;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:800;font-size:14px;max-width:90vw;text-align:center}
+.tabs.four{grid-template-columns:repeat(4,minmax(0,1fr))}.tabs.four button{font-size:14px;padding:0 2px}
+.uc{flex:none;width:58px;height:84px;border-radius:11px;border:3px solid #fff;display:flex;align-items:center;justify-content:center;text-align:center;font:700 24px/1 Fredoka,sans-serif;color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25);cursor:pointer;padding:2px;position:relative}
+.uc.sm{font-size:13px;line-height:1.1}.uc.big{width:84px;height:120px;font-size:34px}.uc.big.sm{font-size:17px}
+.uc.r{background:#ff4a3d}.uc.y{background:#f5b400}.uc.g{background:#1fa866}.uc.b{background:#2f6bff}.uc.k{background:linear-gradient(135deg,#2b1720 0 50%,#4a2a3a 50%)}
+.uc.no{opacity:.4}.uc.sel{transform:translateY(-10px);outline:3px solid var(--hot)}
+.uc.back{background:repeating-linear-gradient(45deg,var(--box) 0 6px,var(--box2) 6px 12px);cursor:default;width:34px;height:50px;margin-left:-18px}
+.uc.back:first-child{margin-left:0}
+.table{display:flex;align-items:center;justify-content:center;gap:18px;padding:18px;border-radius:24px;background:radial-gradient(ellipse at center,#1f8a54,#126638);box-shadow:inset 0 0 0 6px #0d4f2b,0 8px 0 #0a3d21;margin-bottom:6px}
+.pilebtn{display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-weight:800;font-size:13px}
+.deck{width:84px;height:120px;border-radius:11px;border:3px solid #fff;background:repeating-linear-gradient(45deg,var(--box) 0 8px,var(--box2) 8px 16px);cursor:pointer;color:#fff;font:700 18px Fredoka,sans-serif}
+.cdot{width:22px;height:22px;border-radius:50%;border:3px solid #fff;display:inline-block;vertical-align:middle}
+.opp{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-weight:800}
+.opp .backs{display:flex}
+.hand{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:14px 4px 4px;min-height:100px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.acts .btn{min-height:44px;font-size:15px}
+.btn.hot{background:var(--hot);box-shadow:0 4px 0 #9c1240}
+.picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+.picker button{min-height:52px;border-radius:14px;border:3px solid #fff;cursor:pointer;color:#fff;font-weight:800}
+.golf{position:relative;width:100%;aspect-ratio:2/3;border-radius:22px;overflow:hidden;box-shadow:0 8px 0 #0a3d21;touch-action:none;background:#2e9a52}
+.golf canvas{position:absolute;inset:0;width:100%;height:100%}
+.gbar{display:flex;justify-content:space-between;gap:8px;font-weight:800;margin:0 0 8px;flex-wrap:wrap}
+.tabs.six{grid-template-columns:repeat(3,minmax(0,1fr))}.tabs.six button{font-size:15px}
+.dbox{position:relative;width:100%;aspect-ratio:1;border-radius:18px;overflow:hidden;border:4px solid var(--ink);touch-action:none;background:#fffdf8}
+.dbox canvas{position:absolute;inset:0;width:100%;height:100%}
+.dtop{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:8px;gap:8px}
+#dTimer{font:700 24px Fredoka,sans-serif;color:var(--hot);white-space:nowrap}
+#ds{word-break:break-word}
+.tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.tools button{width:44px;height:44px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer}
+.tools button.txt{width:auto;border-radius:12px;padding:0 12px;background:var(--card);color:var(--ink);font-weight:800;border:2px solid var(--line);box-shadow:none}
+.choices{display:grid;gap:8px;margin-top:12px}
+.guessf{display:flex;gap:8px;margin-top:12px}.guessf input{flex:1}
+.fbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+#fScore{font:700 22px Fredoka,sans-serif}
+.fbox{position:relative;width:100%;aspect-ratio:2/3;border-radius:22px;overflow:hidden;box-shadow:0 8px 0 #0a3d21;touch-action:none;background:#2c9a4e}
+.fbox canvas{position:absolute;inset:0;width:100%;height:100%}
+#chatBtn{position:fixed;right:16px;bottom:16px;z-index:20;min-height:52px;border-radius:99px;padding:0 20px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+#chatN{display:inline-block;min-width:22px;height:22px;border-radius:99px;background:var(--hot);color:#fff;font-size:13px;line-height:22px;text-align:center;margin-left:6px;padding:0 6px}
+#chat{position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:520px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;height:min(70vh,520px);padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
+.chead{display:flex;align-items:center;justify-content:space-between;font:700 20px Fredoka,sans-serif;margin-bottom:6px}
+.chead button{min-height:40px}
+#chatList{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:6px 2px}
+.msg{align-self:flex-start;max-width:80%;background:var(--bg);border-radius:16px 16px 16px 4px;padding:6px 12px;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--box);color:#fff;border-radius:16px 16px 4px 16px}
+.msg b{display:block;font-size:12px;opacity:.75}
+.quick{display:flex;gap:6px;overflow-x:auto;padding:6px 0}
+.quick button{flex:none;min-height:36px;border-radius:99px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font-weight:800;font-size:14px;padding:0 12px;cursor:pointer}
+#chatF{display:flex;gap:8px}#chatF input{flex:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="11" cy="16" r="9" fill="var(--p1)"/><circle cx="21" cy="16" r="9" fill="var(--p2)" opacity=".9"/></svg>Tú y yo</h1>
+    <span class="pill" id="net">Sin conectar</span>
+  </header>
+
+  <section id="lobby">
+    <div class="card">
+      <label for="nick">Tu nombre</label>
+      <input id="nick" maxlength="16" placeholder="Ej. David" autocomplete="nickname">
+    </div>
+    <div class="card">
+      <h2>Empezar una partida</h2>
+      <button class="btn" id="create" style="width:100%">Crear sala nueva</button>
+      <p class="muted">Te dará un código de 6 letras. Mándaselo a tu pareja (o el enlace).</p>
+      <div class="or">o bien</div>
+      <label for="code">Tengo un código</label>
+      <div class="row">
+        <input id="code" class="code-in" maxlength="6" placeholder="ABC123" autocomplete="off">
+        <button class="btn alt" id="join">Unirme</button>
+      </div>
+    </div>
+    <p class="muted" id="lobbyMsg"></p>
+    <button class="btn alt hide" id="localBtn" style="width:100%;margin-top:10px">Jugar los dos en este móvil</button>
+  </section>
+
+  <section id="game" class="hide">
+    <div class="codebar">
+      <span class="muted" style="margin:0">Sala</span><b id="codeShow"></b>
+      <button class="btn alt sm" id="copy">Copiar enlace</button>
+    </div>
+    <div class="players" id="players"></div>
+    <div class="tabs six" role="tablist">
+      <button id="tC4" class="on" role="tab" data-m="c4">Conecta 4</button>
+      <button id="tU" role="tab" data-m="u">Cartas</button>
+      <button id="tG" role="tab" data-m="gf">Minigolf</button>
+      <button id="tF" role="tab" data-m="fb">Fútbol</button>
+      <button id="tD" role="tab" data-m="dw">Dibuja</button>
+      <button id="tQ" role="tab" data-m="q">Preguntas</button>
+    </div>
+    <div class="ev" id="ev"></div>
+
+    <div id="pU" class="hide">
+      <div class="opp"><span id="uOppName"></span><div class="backs" id="uBacks"></div><span id="uOppN" class="muted" style="margin:0"></span></div>
+      <div class="table">
+        <div class="pilebtn"><button class="deck" id="uDeck">Robar</button><span id="uDeckN"></span></div>
+        <div class="pilebtn"><div id="uTop"></div><span>Color: <i class="cdot" id="uCol"></i></span></div>
+      </div>
+      <div class="status" id="us"></div>
+      <div id="uGate" class="center hide"><button class="btn" id="uPeek">Ver mis cartas</button></div>
+      <div class="hand" id="uHand"></div>
+      <div class="picker hide" id="uPick"></div>
+      <div class="acts">
+        <button class="btn alt hide" id="uPass">Pasar</button>
+        <button class="btn hot hide" id="uUno">¡UNO!</button>
+        <button class="btn hot hide" id="uCatch">¡No ha dicho UNO!</button>
+        <button class="btn hide" id="uAgain">Revancha</button>
+      </div>
+      <details class="rules card">
+        <summary>Reglas de Cartas Caos</summary>
+        <ul>
+          <li>Como el UNO: echa una carta del mismo color o número. Gana quien se quede sin cartas.</li>
+          <li><b>Salta</b> y <b>Gira</b>: vuelves a tirar tú. <b>+2</b> y <b>+4</b> se pueden acumular encima.</li>
+          <li><b>Cambio</b>: intercambias tu mano entera con la de tu pareja.</li>
+          <li><b>Ladrón</b>: le endosas 2 cartas tuyas al azar.</li>
+          <li><b>Espejo</b>: si te toca robar por un +2 o +4, se lo devuelves. Si no, sirve de comodín.</li>
+          <li>Cuando te queden 2 cartas, pulsa <b>¡UNO!</b> antes de tirar. Si no lo haces, tu pareja puede pillarte y robas 2.</li>
+        </ul>
+      </details>
+    </div>
+
+    <div id="pG" class="hide">
+      <div class="gbar"><span id="gHole"></span><span id="gStrokes"></span></div>
+      <div class="golf" id="golf"><canvas id="gc"></canvas></div>
+      <div class="status" id="gs"></div>
+      <div class="powers" id="gPowers" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
+      <p class="muted" style="text-align:center">Arrastra hacia atrás desde cualquier parte del campo y suelta para golpear.</p>
+      <div class="center" style="margin-top:10px"><button class="btn hide" id="gAgain">Nuevo recorrido</button></div>
+      <details class="rules card">
+        <summary>Reglas del Minigolf Caos</summary>
+        <ul>
+          <li>6 hoyos y tiráis por turnos. Gana quien acabe el recorrido con menos golpes. Máximo 8 golpes por hoyo.</li>
+          <li>La arena frena la bola. Si cae al agua, vuelve a donde estaba y sumas 1 golpe.</li>
+          <li><b>Imán</b> (2 usos): en tu próximo golpe, el hoyo atrae la bola.</li>
+          <li><b>Fantasma</b> (2 usos): en tu próximo golpe, la bola atraviesa los muros.</li>
+          <li><b>Al inicio</b> (2 usos): mandas la bola de tu pareja a la salida del hoyo.</li>
+        </ul>
+      </details>
+    </div>
+
+    <div id="pF" class="hide">
+      <div class="fbar"><span id="fScore"></span><span class="muted" id="fSide" style="margin:0"></span></div>
+      <div class="fbox" id="fbox"><canvas id="fc"></canvas></div>
+      <div class="status" id="fs"></div>
+      <div class="powers" id="fPowers"></div>
+      <div class="center" style="margin-top:10px"><button class="btn hide" id="fAgain">Otro partido</button></div>
+      <details class="rules card">
+        <summary>Reglas del Fútbol Chapas</summary>
+        <ul>
+          <li>Cada uno tiene 3 chapas. En tu turno arrastras una hacia atrás y la sueltas para lanzarla contra el balón. Gana quien marque primero 3 goles.</li>
+          <li>Después de cada gol saca el equipo que lo ha recibido. ¡Ojo, que los goles en propia cuentan!</li>
+          <li><b>Supertiro</b>: tu próximo lanzamiento sale con un 60% más de fuerza.</li>
+          <li><b>Doble turno</b>: lanzas dos veces seguidas.</li>
+          <li><b>Muro</b>: tapas tu portería durante el siguiente lanzamiento de tu pareja.</li>
+          <li><b>Hielo</b>: congelas una chapa rival y no la puede usar en su próximo turno.</li>
+          <li>Cada poder se puede usar una vez por partido.</li>
+        </ul>
+      </details>
+    </div>
+
+    <div id="pD" class="hide">
+      <div class="dtop"><span id="dRound" class="muted" style="margin:0"></span><span id="dTimer"></span></div>
+      <div class="status" id="ds" style="margin:6px 0 12px"></div>
+      <div class="choices hide" id="dChoices"></div>
+      <div class="dbox" id="dbox"><canvas id="dc"></canvas></div>
+      <div class="hide" id="dInkRow" style="margin-top:8px"><span class="muted" style="margin:0">Tinta</span><div class="meter"><span id="dInk" style="width:0%"></span></div></div>
+      <div class="tools hide" id="dTools"></div>
+      <form class="guessf hide" id="dGuessF"><input id="dGuess" placeholder="¿Qué es?" autocomplete="off" maxlength="30"><button class="btn">Probar</button><button type="button" class="btn alt" id="dHint">Pista</button></form>
+      <p class="muted" id="dGuesses" style="text-align:center"></p>
+      <div class="center" style="margin-top:10px"><button class="btn hide" id="dNext">Siguiente ronda</button></div>
+      <details class="rules card">
+        <summary>Cómo se juega</summary>
+        <ul>
+          <li>Por turnos, uno elige una palabra entre tres y la dibuja. El otro ve el dibujo en directo y tiene 80 segundos para acertarla.</li>
+          <li>Si aciertas sin pistas te llevas 3 puntos, y quien dibuja se lleva 1. Cada pista que pidas te quita un punto, y tienes 2 pistas por partida.</li>
+          <li>A los 45 segundos se descubre una letra gratis. La tinta es limitada, así que no te recrees.</li>
+        </ul>
+      </details>
+    </div>
+
+    <div id="pC4">
+      <div class="housing" id="housing"><div class="board" id="board" aria-label="Tablero de Conecta 4"></div></div>
+      <div class="status" id="c4s"></div>
+      <div class="powers" id="powers"></div>
+      <p class="muted" id="aimTxt" style="text-align:center"></p>
+      <div class="center" style="margin-top:10px"><button class="btn hide" id="again">Revancha</button></div>
+      <details class="rules card">
+        <summary>Reglas del Conecta 4 Caos</summary>
+        <ul>
+          <li>Gana quien junte 4 en raya. Cada uno tiene 4 poderes de un solo uso por partida, y solo uno por turno.</li>
+          <li><b>Bomba</b>: revienta cualquier ficha y las de encima caen. Gasta tu turno.</li>
+          <li><b>Cambiazo</b>: convierte una ficha rival en tuya. Gasta tu turno.</li>
+          <li><b>Doble</b>: este turno pones dos fichas seguidas.</li>
+          <li><b>Hielo</b>: congela una columna; tu pareja no puede usarla en su próximo turno. Luego tiras normal.</li>
+          <li><b>Terremoto</b>: cada 8 fichas la fila de abajo desaparece y todo cae. Si salen 4 en raya de los dos, gana quien provocó el lío.</li>
+          <li><b>Lluvia de estrellas</b>: cada 11 fichas, a quien le toque recupera un poder gastado.</li>
+        </ul>
+      </details>
+    </div>
+
+    <div id="pQ" class="hide">
+      <div class="chips" id="cats"></div>
+      <div class="card">
+        <p class="muted" style="margin:0 0 4px" id="qn"></p>
+        <div class="q" id="qt"></div>
+        <div class="opts" id="opts"></div>
+        <div id="qres"></div>
+        <p class="muted" id="qwait"></p>
+        <div class="center" style="margin-top:14px"><button class="btn hide" id="next">Siguiente pregunta</button></div>
+      </div>
+      <div class="card">
+        <b id="hitsTxt"></b>
+        <div class="meter"><span id="hitsBar" style="width:0%"></span></div>
+      </div>
+    </div>
+    <p class="muted" style="text-align:center;margin-top:18px"><button class="btn alt sm" id="leave" style="min-height:40px">Salir de la sala</button></p>
+  </section>
+</div>
+<div class="toast hide" id="toast"></div>
+<button class="btn hide" id="chatBtn">Chat<span id="chatN" class="hide">0</span></button>
+<div id="chat" class="hide" role="dialog" aria-label="Chat">
+  <div class="chead">Chat<button class="btn alt" id="chatClose">Cerrar</button></div>
+  <div id="chatList"></div>
+  <div class="quick" id="chatQuick"><button>jajajaja</button><button>te quiero</button><button>tramposo/a</button><button>¿revancha?</button><button>eso no vale</button><button>te voy a ganar</button><button>ven aquí</button></div>
+  <form id="chatF"><input id="chatIn" maxlength="100" placeholder="Escribe un mensaje" autocomplete="off"><button class="btn">Enviar</button></form>
+</div>
+
+<script>
+{
+// ===== Conexión entre móviles: MQTT público + cifrado con el código de sala =====
+const BROKERS=window.TYY_BROKERS||["wss://broker.emqx.io:8084/mqtt","wss://broker.hivemq.com:8884/mqtt"];
+const SALT="tuyyo-v1-9d3k";
+function loadMqtt(){if(window.mqtt)return Promise.resolve(window.mqtt);return new Promise((ok,ko)=>{const s=document.createElement("script");s.src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js";s.onload=()=>window.mqtt?ok(window.mqtt):ko(new Error("mqtt"));s.onerror=()=>ko(new Error("mqtt"));document.head.appendChild(s)})}
+const b64e=u=>{let s="";for(const x of u)s+=String.fromCharCode(x);return btoa(s)};
+const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKey(code){const raw=await crypto.subtle.importKey("raw",new TextEncoder().encode(code),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt:new TextEncoder().encode(SALT),iterations:60000,hash:"SHA-256"},raw,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
+async function topicHash(code){const h=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(SALT+"|"+code));return b64e(new Uint8Array(h)).replace(/[^a-zA-Z0-9]/g,"").slice(0,22)}
+function tryConnect(mq,url,opts){return new Promise((ok,ko)=>{const c=mq.connect(url,Object.assign({connectTimeout:7000,reconnectPeriod:0},opts));
+  const fail=e=>{c.removeAllListeners&&c.removeAllListeners();try{c.end(true)}catch(_){}ko(e||new Error("fail"))};c.once("connect",()=>ok(c));c.once("error",fail);setTimeout(()=>fail(new Error("timeout")),8000)})}
+async function mqttJoin(name){
+  const mq=await loadMqtt();const key=await deriveKey(name);const base="tuyyo/"+await topicHash(name);
+  const myId=Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>b.toString(36)).join("").slice(0,12);
+  const myTopic=base+"/p/"+myId;const opts={clientId:"tyy_"+myId,clean:true,keepalive:20,will:{topic:myTopic,payload:"",retain:true,qos:0}};
+  let client=null,lastErr;
+  for(const u of BROKERS){try{client=await tryConnect(mq,u,opts);client.__url=u;break}catch(e){lastErr=e}}
+  if(!client)throw lastErr||new Error("no broker");
+  client.options.reconnectPeriod=2000;
+  const peers=new Map();let mine={},listeners=[],connL=[],snap=[],conn=true,pubT=null,lastPub=0;
+  const build=()=>{const now=Date.now();snap=[{peer:myId,by:null,isMe:true,sameTab:true,kind:"viewer",guest:false,presence:mine,updatedAt:now}];
+    for(const[id,v]of peers){if(now-v.t>65000)continue;snap.push({peer:id,by:null,isMe:false,sameTab:false,kind:"viewer",guest:false,presence:v.p,updatedAt:v.at})}snap.sort((a,b)=>a.peer<b.peer?-1:1);return snap};
+  const fire=()=>{build();for(const f of listeners)try{f({peers:snap,joined:[],left:[],updated:[]})}catch(e){console.error(e)}};
+  async function publish(){lastPub=Date.now();const iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(JSON.stringify({p:mine,t:Date.now()}))));
+    const out=new Uint8Array(12+ct.length);out.set(iv);out.set(ct,12);if(client.connected)client.publish(myTopic,b64e(out),{retain:true,qos:0})}
+  const schedule=()=>{if(pubT)return;const wait=Math.max(0,90-(Date.now()-lastPub));pubT=setTimeout(()=>{pubT=null;publish().catch(()=>{})},wait)};
+  client.on("message",async(topic,buf)=>{const id=topic.split("/").pop();if(id===myId)return;const txt=buf.toString();
+    if(!txt){if(peers.delete(id))fire();return}
+    try{const raw=b64d(txt);const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:raw.slice(0,12)},key,raw.slice(12));const m=JSON.parse(new TextDecoder().decode(pt));
+      if(!m||typeof m!=="object"||typeof m.t!=="number"||!m.p||typeof m.p!=="object")return;
+      if(Date.now()-m.t>65000){return}
+      peers.set(id,{p:m.p,t:m.t,at:Date.now()});fire()}catch(e){}});
+  client.on("connect",()=>{conn=true;client.subscribe(base+"/p/+");schedule();connL.forEach(f=>f(true))});
+  client.on("close",()=>{if(conn){conn=false;connL.forEach(f=>f(false))}});
+  client.subscribe(base+"/p/+");
+  const hb=setInterval(()=>{publish().catch(()=>{});fire()},20000);
+  return{name,
+    presence:async patch=>{for(const k in patch){if(patch[k]===null)delete mine[k];else mine[k]=patch[k]}schedule();fire()},
+    onPeers:fn=>{listeners.push(fn);setTimeout(()=>fn({peers:build(),joined:[],left:[],updated:[]}),0);return()=>{listeners=listeners.filter(f=>f!==fn)}},
+    peers:()=>build(),
+    connected:()=>client.connected,
+    onConnection:fn=>{connL.push(fn);setTimeout(()=>fn(client.connected),0);return()=>{connL=connL.filter(f=>f!==fn)}},
+    leave:async()=>{clearInterval(hb);clearTimeout(pubT);try{client.publish(myTopic,"",{retain:true});setTimeout(()=>client.end(),300)}catch(e){}listeners=[];connL=[]},
+    emit:async()=>{},on:()=>()=>{}};
+}
+
+const $=s=>document.querySelector(s);
+// @1 y @2 se cambian por los nombres, así los dos veis las mismas opciones
+const W=["@1","@2"],WB=["@1","@2","Los dos"],WN=["@1","@2","Ninguno"];
+const NORMAL=[
+["¿Playa o montaña?",["Playa","Montaña"]],
+["Plan perfecto de domingo",["Sofá y peli","Salir a comer","Excursión"]],
+["¿Dulce o salado?",["Dulce","Salado"]],
+["Viaje soñado",["Japón","Nueva York","Islandia","Una isla perdida"]],
+["¿Quién es más desordenado?",WB],
+["¿Quién se enfada antes?",WN],
+["Cena ideal",["Pizza","Sushi","Tapas","Hamburguesa"]],
+["¿Madrugar o trasnochar?",["Madrugar","Trasnochar"]],
+["¿Quién dijo \"te quiero\" primero?",["@1","@2","Ni idea"]],
+["Mascota ideal",["Perro","Gato","Ninguna"]],
+["¿Quién cocina mejor?",["@1","@2","Pedimos a domicilio"]],
+["Superpoder favorito",["Volar","Teletransporte","Leer mentes","Ser invisible"]],
+["¿Peli de miedo, comedia o romántica?",["Miedo","Comedia","Romántica"]],
+["¿Quién pide perdón primero?",WB],
+["Si nos toca la lotería...",["Viajamos","Casa nueva","Lo ahorramos","Lo fundimos en una semana"]],
+["¿Café o té?",["Café","Té","Ninguno"]],
+["¿Quién es más romántico?",W],
+["Regalo perfecto",["Una experiencia","Algo hecho a mano","Algo que necesito"]],
+["¿Invierno o verano?",["Invierno","Verano"]],
+["¿Quién se duerme antes en el sofá?",W],
+["¿Quién tarda más en arreglarse?",W],
+["Fin de semana sorpresa",["Casa rural","Ciudad nueva","Spa","Festival"]],
+["¿Quién controla el mando de la tele?",["@1","@2","Nadie, peleamos"]],
+["Desayuno ideal",["Tostadas","Churros","Tortitas","Solo café"]],
+["¿Quién es más celoso?",WN],
+["¿Fiesta o plan tranquilo?",["Fiesta","Tranquilo"]],
+["¿Quién recuerda mejor las fechas?",W],
+["Si fuéramos animales seríamos...",["Dos koalas","Dos leones","Dos pingüinos","Dos mapaches"]],
+["¿Quién manda en la relación?",["@1","@2","Los dos por igual"]],
+["¿Quién se tira más pedos?",["@1","@2","Secreto de estado"]],
+["¿Quién ronca más?",["@1","@2","Nadie ronca (mentira)"]],
+["¿Quién roba la manta por la noche?",W],
+["¿Quién manda los audios más largos?",W],
+["¿Quién sobreviviría más en un apocalipsis zombi?",W],
+["¿Quién llora más con las pelis?",WB],
+["¿Quién es más cabezota?",WB],
+["¿Quién se pierde más con el GPS puesto?",W],
+["¿Quién gasta más en caprichos?",W],
+["¿Quién es más friolero?",W],
+["¿Quién tiene más cosquillas?",W],
+["¿Quién mira más el móvil en la cama?",W],
+["¿Quién dice \"no tengo hambre\" y luego se come lo tuyo?",W],
+["¿Quién es peor perdiendo a un juego?",["@1","@2","Ahora lo vemos"]],
+["¿Quién se hace el dormido para no levantarse?",W],
+["¿Quién canta peor en la ducha?",WB],
+["¿Quién tiene la familia más intensa?",["La de @1","La de @2","Empate"]],
+["¿Quién sería mejor padre o madre de un perro?",W],
+["¿Quién se ríe de sus propios chistes?",WB],
+["¿Quién decide dónde cenamos?",["@1","@2","Nadie, nos morimos de hambre"]],
+["¿Quién organiza mejor un viaje?",W],
+["¿Quién conduce mejor?",["@1","@2","Mejor en bus"]],
+["Si nos casáramos, la boda sería...",["Enorme","Pequeña e íntima","En Las Vegas","Sin boda, de fiesta"]],
+["¿Cuántos hijos?",["Ninguno","Uno","Dos","Un equipo de fútbol"]],
+["¿Dónde viviríamos de mayores?",["En la playa","En el campo","En una gran ciudad","En otro país"]],
+["¿Quién se pone más tonto con hambre?",W],
+["Primera cita: ¿qué recuerdas más?",["Los nervios","La ropa","Lo que comimos","El primer beso"]],
+["¿Quién stalkeó más las redes del otro al principio?",["@1","@2","Los dos, sin vergüenza"]],
+["Peli para ver juntos esta noche",["Acción","Terror","Comedia","Documental de crímenes"]],
+["¿Quién aguanta menos el picante?",W],
+["¿Quién hace más el payaso en público?",W],
+["Nuestro mayor vicio en pareja",["Series","Comer","Dormir","Discutir por tonterías"]],
+["¿Quién se entera antes de los cotilleos?",W],
+["¿Quién perdona más rápido?",W],
+["¿Quién es más de planes improvisados?",W],
+["¿Qué nos falta hacer juntos?",["Un viaje largo","Un tatuaje a juego","Saltar en paracaídas","Adoptar una mascota"]],
+["¿Quién se ducha más largo?",W],
+["Peor hábito del otro",["Dejar ropa por ahí","Llegar tarde","El móvil","Roncar"]],
+["¿Quién sería más famoso en TikTok?",W]
+];
+const HOT=[
+["¿Quién besa mejor?",["@1","@2","Empate técnico"]],
+["¿Quién suele empezar los mimos?",WB],
+["¿Luz encendida o apagada?",["Encendida","Apagada","Velitas"]],
+["Mejor momento para mimos",["Por la mañana","Siesta","Por la noche","Cuando sea"]],
+["¿Ducha juntos?",["Romántico","Incómodo, alguien pasa frío","Planazo"]],
+["¿Quién manda las indirectas más descaradas?",W],
+["Pijama ideal de tu pareja",["Camiseta enorme","Pijama de franela","Nada","Ropa interior bonita"]],
+["¿Quién se pone más celoso si alguien guapo pasa?",WN],
+["¿Disfraces y juegos de rol?",["Sí, sí y sí","Depende del disfraz","Me da la risa"]],
+["¿Quién pide más masajes?",W],
+["Si pudiéramos repetir una noche...",["La primera","La de las vacaciones","La de anoche","Aún está por llegar"]],
+["Beso favorito",["En el cuello","En los labios","En la frente","Por sorpresa"]],
+["¿Quién es más de \"cinco minutitos más\" en la cama?",W],
+["¿Velas y música o espontaneidad?",["Velas y música","Espontaneidad","Las dos según el día"]],
+["¿Quién liga sin querer con los camareros?",W],
+["¿Despertar con besos o con café?",["Besos","Café","Las dos cosas"]],
+["¿Quién tiene la mente más sucia?",["@1","@2","Empate, qué peligro"]],
+["Lugar más loco para un beso",["En el coche","En un ascensor","En la playa","En una boda"]],
+["¿Quién se pone más rojo con un piropo?",W],
+["Lo primero que te fijaste del otro",["Los ojos","La sonrisa","El culo","La voz"]],
+["¿Quién manda fotos más atrevidas?",["@1","@2","Nadie (de momento)"]],
+["¿Quién tiene más aguante?",["@1","@2","Ponlo a prueba"]],
+["Reconciliación después de discutir",["Con abrazos","Con comida","Con mimos de los buenos","Haciendo como que nada"]],
+["¿Quién es más ruidoso...?",["@1","@2","Mejor no contestar"]],
+["Escapada romántica perfecta",["Hotel con jacuzzi","Cabaña en el bosque","París","Nuestro sofá"]],
+["¿Quién se quita antes la ropa al llegar a casa?",W],
+["Tu pareja con...",["Traje o vestido elegante","Ropa de deporte","Recién duchado","En pijama"]],
+["¿Quién es más mimoso dormido?",W],
+["¿Quién se haría un tatuaje con el nombre del otro?",["@1","@2","Ninguno, no estamos locos"]],
+["¿Quién tiene más fantasías pendientes?",W],
+["El mejor sitio para estar juntos",["La cama","El sofá","La ducha","La cocina"]],
+["¿Quién mira más el cuerpo del otro cuando se cambia?",WB],
+["¿Quién es más de morder?",["@1","@2","Ninguno, somos civilizados"]],
+["Mejor plan de San Valentín",["Cena y algo más","Algo más y luego cena","Pasar de San Valentín"]],
+["¿Quién se pone más tonto con una copa de más?",W],
+["¿Quién es más atrevido?",W],
+["Una palabra para nuestra primera vez",["Nervios","Risas","Épica","Mejor no hablemos"]],
+["¿Quién está más bueno?",["@1","@2","Los dos, qué suerte"]],
+["¿Quién tarda menos en caer con unos besitos en el cuello?",W],
+["¿Qué te pone más?",["Que me hable al oído","Que me mire así","Que cocine para mí","Que me haga reír"]],
+["¿Quién roba más besos por sorpresa?",W],
+["Si tuviéramos una noche sin límites...",["Hotel de lujo","Fiesta y luego casa","Escapada sorpresa","Nos encerramos en casa"]],
+["¿Quién es más de \"aquí no, que nos ven\"?",W],
+["¿Quién ha dicho más veces \"solo un capítulo más\"?",W],
+["Lo más sexy de tu pareja",["Su risa","Sus manos","Su forma de mirar","Cómo huele"]],
+["¿Quién es más pegajoso para dormir?",W],
+["¿Quién aguanta más sin un beso?",["@1","@2","Ninguno, imposible"]]
+];
+const RETOS=["Reto: beso de 10 segundos sin reíros","Reto: decid algo que os encante del otro","Reto: el que eligió la primera opción da un masaje de 2 minutos","Reto: miraos a los ojos 20 segundos sin hablar","Reto: mandaos el audio más ñoño que sepáis","Reto: imitad cómo liga el otro","Reto: un beso donde el otro elija","Reto: contad el mejor recuerdo juntos","Reto: el próximo café lo paga quien más se ha reído","Reto: abrazo de oso de 15 segundos"];
+const V=["Verdadero","Falso"];
+const FIRE=[
+["¿Quién tiene más ganas ahora mismo?",["@1","@2","Los dos, peligro"]],
+["¿Dónde no lo hemos hecho y deberíamos?",["En la playa","En el coche","En un hotel de lujo","En la cocina"]],
+["¿Qué te gusta más que te haga?",["Besos en el cuello","Mordisquitos","Caricias en la espalda","Que te susurre"]],
+["¿Quién es más escandaloso en la cama?",["@1","@2","Los vecinos lo saben"]],
+["Mejor momento del día para un encuentro",["Recién despiertos","Media tarde","Noche cerrada","Cualquier hueco libre"]],
+["¿Lencería o directamente nada?",["Lencería","Nada","Un disfraz"]],
+["¿Quién toma la iniciativa más veces?",["@1","@2","Cada vez uno"]],
+["Algo que te encantaría probar juntos",["Un juego de roles","Atarnos (suave)","Un sitio prohibido","Grabar un audio subido de tono"]],
+["¿Qué parte del cuerpo de tu pareja te vuelve loco/a?",["Los labios","El cuello","El culo","Las manos"]],
+["¿Luz, música y velas o arrancarnos la ropa?",["Romántico","Salvaje","Empezar romántico y acabar salvaje"]],
+["¿Quién aguanta menos sin tocar al otro?",["@1","@2","Ninguno, imposible"]],
+["¿Ducha juntos con final feliz?",["Siempre","A veces","Nos resbalamos seguro"]],
+["¿Quién manda más en la cama?",["@1","@2","Turnos democráticos"]],
+["Mensaje más picante que nos podemos mandar",["Una foto","Un audio","Un 'esta noche verás'","Una lista de deseos"]],
+["¿Antifaz para tapar los ojos?",["Sí, qué morbo","Me da la risa","Solo si es mi turno de mandar"]],
+["¿Quién se pone más rápido a tono?",["@1","@2","Empate técnico"]],
+["Plan perfecto para una noche loca",["Hotel sin salir","Fiesta y luego casa","Escapada sorpresa","Casa, sofá y lo que surja"]],
+["¿Qué te pone más de tu pareja?",["Su voz","Su mirada","Cómo besa","Cómo me agarra"]],
+["Si hoy no hubiera límites...",["Maratón en la cama","Algo nuevo","Repetir lo mejor","Dormir abrazados (mentira)"]],
+["¿Quién piensa más en el tema durante el día?",["@1","@2","Los dos, sin parar"]],
+["¿Ropa interior a juego o la primera que pille?",["A juego","La primera que pille","Ninguna"]],
+["Postura favorita para mimos",["Cucharita","Encima","Abrazados de frente","Me da igual si es contigo"]],
+["¿Juguetitos sí o no?",["Sí, sí y sí","Con curiosidad","No hace falta"]],
+["¿Quién es más de morder y arañar?",["@1","@2","Los dos, con cuidado"]],
+["Sitio más arriesgado para un beso de los buenos",["En el ascensor","En el cine","En casa de los suegros","En el probador"]],
+["¿Qué prefieres que te quite tu pareja?",["La camiseta","Los pantalones","Todo de golpe","Que me deje con algo puesto"]],
+["¿Quién tiene la fantasía más loca?",["@1","@2","Mejor no decirlo en voz alta"]],
+["Después del momento...",["A dormir","A comer algo","Segunda ronda","Hablar abrazados"]],
+["¿Un striptease?",["Lo haría yo","Que me lo hagan","Los dos","Me muero de vergüenza"]],
+["¿Qué es lo más sexy que puede llevar tu pareja?",["Solo mi camiseta","Ropa elegante","Ropa interior bonita","Una toalla"]],
+["¿Quién se ha puesto más rojo en un momento íntimo?",["@1","@2","Ninguno, cero vergüenza"]],
+["Para calentar motores...",["Un masaje con aceite","Besos sin parar","Mensajes durante el día","Un baile lento"]],
+["¿Ha habido alguna vez que casi nos pillan?",["Sí","No","No sé de qué me hablas"]],
+["¿Quién es más de susurrar guarradas al oído?",["@1","@2","Ninguno (aún)"]],
+["Noche ideal en un hotel",["Jacuzzi","Espejo en el techo","Champán y fresas","Cama gigante"]],
+["¿Rapidito o sesión larga?",["Rapidito","Sesión larga","Las dos, según el día"]],
+["¿Qué tendríamos que hacer más a menudo?",["Mimos por la mañana","Escapadas","Probar cosas nuevas","Ducharnos juntos"]],
+["¿Quién da los mejores masajes con final sorpresa?",["@1","@2","Hay que comprobarlo"]],
+["¿Disfraz favorito para tu pareja?",["Enfermero/a","Policía","Bombero/a","Superhéroe"]],
+["¿Quién besa con más ganas?",["@1","@2","Empate, qué calor"]]
+];
+const VF=[
+["Verdadero o falso: @1 es más celoso/a que @2",V],
+["Verdadero o falso: @2 tarda más en arreglarse",V],
+["Verdadero o falso: @1 ha stalkeado a algún ex de @2",V],
+["Verdadero o falso: @2 se ha comido algo de @1 a escondidas",V],
+["Verdadero o falso: @1 ha fingido estar dormido/a para no levantarse",V],
+["Verdadero o falso: @2 sabe la contraseña del móvil de @1",V],
+["Verdadero o falso: @1 ha llorado con una peli de dibujos",V],
+["Verdadero o falso: @2 ha cantado en la ducha hoy",V],
+["Verdadero o falso: @1 ronca",V],
+["Verdadero o falso: @2 se ha tirado un pedo delante de @1",V],
+["Verdadero o falso: @1 se acuerda de qué llevaba @2 en la primera cita",V],
+["Verdadero o falso: @2 se enamoró antes que @1",V],
+["Verdadero o falso: @1 ha mirado el móvil de @2 a escondidas",V],
+["Verdadero o falso: @2 sería capaz de comer pizza con piña",V],
+["Verdadero o falso: @1 cocina mejor que @2",V],
+["Verdadero o falso: @2 ha soñado con @1 esta semana",V],
+["Verdadero o falso: @1 ha dicho alguna vez 'no estoy enfadado/a' estando enfadadísimo/a",V],
+["Verdadero o falso: @2 ganaría a @1 en una pelea de cosquillas",V],
+["Verdadero o falso: lo primero que hizo @1 al conocer a @2 fue mirarle el culo",V],
+["Verdadero o falso: @2 ha tenido un sueño picante con @1",V],
+["Verdadero o falso: @1 ha pensado en @2 sin ropa hoy",V],
+["Verdadero o falso: a @2 le pone que @1 le hable al oído",V],
+["Verdadero o falso: @1 lo haría en un sitio público",V],
+["Verdadero o falso: @2 tiene una fantasía que aún no le ha contado a @1",V],
+["Verdadero o falso: @1 ha mandado alguna foto atrevida a @2",V],
+["Verdadero o falso: @2 prefiere hacerlo por la mañana",V],
+["Verdadero o falso: @1 se pone celoso/a cuando @2 se arregla para salir sin él/ella",V],
+["Verdadero o falso: @2 ha buscado ideas picantes en internet",V],
+["Verdadero o falso: @1 tiene más aguante que @2",V],
+["Verdadero o falso: @2 se ha quitado la ropa delante del espejo para gustarle a @1",V],
+["Verdadero o falso: a @1 le gustaría probar a usar un antifaz",V],
+["Verdadero o falso: @2 sabe exactamente dónde le gustan los besos a @1",V],
+["Verdadero o falso: @1 ha tenido ganas de @2 en una reunión familiar",V],
+["Verdadero o falso: @2 ha dejado una marca (de besos) a @1",V],
+["Verdadero o falso: @1 se ducharía ahora mismo con @2",V],
+["Verdadero o falso: esta noche va a pasar algo",V],
+["Verdadero o falso: @2 es mejor en la cama de lo que cree",V],
+["Verdadero o falso: @1 ha puesto excusas para irse antes a casa con @2",V],
+["Verdadero o falso: @2 se casaría con @1 mañana mismo",V],
+["Verdadero o falso: @1 está pensando en algo picante ahora mismo",V]
+];
+const RETOS_F=["Reto: beso de 20 segundos donde elija quien ha acertado","Reto: susúrrale al oído qué le harías esta noche","Reto: quítale una prenda (la que tú elijas)","Reto: masaje de 3 minutos donde diga tu pareja","Reto: mándale el audio más subido de tono que te atrevas","Reto: beso en el cuello de 10 segundos","Reto: dile tu fantasía en una sola frase","Reto: 30 segundos de mimos sin usar las manos","Reto: elige tú la próxima pregunta picante y respóndela en voz alta","Reto: baile sexy de 15 segundos para tu pareja"];
+const QS=NORMAL.map(q=>[q[0],q[1],0]).concat(HOT.map(q=>[q[0],q[1],1]),FIRE.map(q=>[q[0],q[1],2]),VF.map(q=>[q[0],q[1],3]));
+const QCAT={normal:0,hot:1,fire:2,vf:3};
+const ALPH="abcdefghjkmnpqrstuvwxyz23456789";
+// ================= FÚTBOL CHAPAS =================
+const FW=360,FH=540,GLN=34,MX0=115,MX1=245,CR=17,BLR=10,FPR=3;
+const KICK=[[95,405],[265,405],[180,470],[95,135],[265,135],[180,70],[180,270]];
+const POSTS=[[MX0,GLN],[MX1,GLN],[MX0,FH-GLN],[MX1,FH-GLN]];
+const r1=v=>Math.round(v*10)/10;
+function fbFresh(first,sc){return{pos:KICK.map(p=>p.slice()),tn:first,first,g:[0,0],pw:[[1,1,1,1],[1,1,1,1]],fz:null,mu:0,dbl:0,shot:{id:0,p:1,k:0,st:KICK.map(p=>p.slice()),vx:0,vy:0,mu:0},win:0,sc}}
+function fbValid(f){const n=x=>typeof x==="number"&&isFinite(x)&&Math.abs(x)<1000;const pts=a=>Array.isArray(a)&&a.length===7&&a.every(p=>Array.isArray(p)&&p.length===2&&n(p[0])&&n(p[1]));
+  return f&&typeof f==="object"&&pts(f.pos)&&isInt(f.tn,1,2)&&isInt(f.first,1,2)&&[f.g,f.sc].every(a=>Array.isArray(a)&&a.length===2&&a.every(x=>isInt(x,0,1e6)))&&Array.isArray(f.pw)&&f.pw.length===2&&f.pw.every(a=>Array.isArray(a)&&a.length===4&&a.every(x=>isInt(x,0,9)))&&(f.fz===null||(f.fz&&isInt(f.fz.p,1,2)&&isInt(f.fz.k,0,5)))&&isInt(f.mu,0,2)&&isInt(f.dbl,0,1)&&f.shot&&isInt(f.shot.id,0,1e9)&&isInt(f.shot.p,1,2)&&isInt(f.shot.k,0,5)&&pts(f.shot.st)&&n(f.shot.vx)&&n(f.shot.vy)&&isInt(f.shot.mu,0,2)&&isInt(f.win,0,2)}
+function fbWall(b){const r=b.r;
+  if(b.x<r){b.x=r;b.vx=Math.abs(b.vx)*.8}if(b.x>FW-r){b.x=FW-r;b.vx=-Math.abs(b.vx)*.8}
+  const inM=b.x>MX0&&b.x<MX1;
+  if(inM){if(b.y<r){b.y=r;b.vy=Math.abs(b.vy)*.7}if(b.y>FH-r){b.y=FH-r;b.vy=-Math.abs(b.vy)*.7}
+    if(b.y<GLN||b.y>FH-GLN){if(b.x<MX0+r){b.x=MX0+r;b.vx=Math.abs(b.vx)*.7}if(b.x>MX1-r){b.x=MX1-r;b.vx=-Math.abs(b.vx)*.7}}}
+  else{if(b.y<GLN+r){b.y=GLN+r;b.vy=Math.abs(b.vy)*.8}if(b.y>FH-GLN-r){b.y=FH-GLN-r;b.vy=-Math.abs(b.vy)*.8}}
+  for(const p of POSTS){const dx=b.x-p[0],dy=b.y-p[1],d=Math.hypot(dx,dy),m=r+FPR;if(d<m&&d>0){const nx=dx/d,ny=dy/d;b.x=p[0]+nx*m;b.y=p[1]+ny*m;const dot=b.vx*nx+b.vy*ny;if(dot<0){b.vx-=1.8*dot*nx;b.vy-=1.8*dot*ny}}}
+}
+function fbMuro(owner){return owner===1?[MX0,FH-GLN-3,MX1-MX0,6]:[MX0,GLN-3,MX1-MX0,6]}
+function simFB(st,k,vx,vy,mu,shooter){
+  const B=st.map((p,i)=>({x:p[0],y:p[1],vx:0,vy:0,r:i===6?BLR:CR,m:i===6?.45:1}));
+  B[k].vx=vx;B[k].vy=vy;const wall=mu&&mu!==shooter?fbMuro(mu):null;const frames=[];let goal=0,after=0;
+  for(let step=0;step<3000;step++){
+    for(let s=0;s<4;s++){
+      for(const b of B){b.x+=b.vx/4;b.y+=b.vy/4;fbWall(b);
+        if(wall){const nx=Math.max(wall[0],Math.min(b.x,wall[0]+wall[2])),ny=Math.max(wall[1],Math.min(b.y,wall[1]+wall[3]));let dx=b.x-nx,dy=b.y-ny;const d=Math.hypot(dx,dy);
+          if(d<b.r){if(d===0){dy=b.y<wall[1]+3?-1:1;dx=0}else{dx/=d;dy/=d}b.x=nx+dx*b.r;b.y=ny+dy*b.r;const dot=b.vx*dx+b.vy*dy;if(dot<0){b.vx-=2*dot*dx;b.vy-=2*dot*dy}}}}
+      for(let i=0;i<7;i++)for(let j=i+1;j<7;j++){const a=B[i],c=B[j];let dx=a.x-c.x,dy=a.y-c.y;const d=Math.hypot(dx,dy),mn=a.r+c.r;
+        if(d<mn&&d>0){dx/=d;dy/=d;const ov=mn-d,ia=1/a.m,ic=1/c.m,t=ia+ic;a.x+=dx*ov*ia/t;a.y+=dy*ov*ia/t;c.x-=dx*ov*ic/t;c.y-=dy*ov*ic/t;
+          const rel=(a.vx-c.vx)*dx+(a.vy-c.vy)*dy;if(rel<0){const jn=-1.85*rel/t;a.vx+=jn*ia*dx;a.vy+=jn*ia*dy;c.vx-=jn*ic*dx;c.vy-=jn*ic*dy}}}
+    }
+    for(let i=0;i<7;i++){const f=i===6?.986:.968;B[i].vx*=f;B[i].vy*=f}
+    frames.push(B.map(b=>[b.x,b.y]));
+    const ball=B[6];
+    if(!goal&&ball.x>MX0&&ball.x<MX1){if(ball.y<GLN-BLR)goal=1;else if(ball.y>FH-GLN+BLR)goal=2}
+    if(goal&&++after>25)break;
+    if(B.every(b=>Math.hypot(b.vx,b.vy)<.05))break;
+  }
+  return{frames,end:B.map(b=>[r1(b.x),r1(b.y)]),goal};
+}
+let fbArm=0,fbAim=null,fbAnim=null,fbLast=-1,fbIce=false;
+function fbMyTurn(){return both()&&!G.fb.win&&!fbAnim&&(local||G.fb.tn===mySlot)}
+function fbShoot(k,vx,vy){
+  const F=G.fb,p=F.tn,o=3-p;
+  if(fbArm){vx*=1.6;vy*=1.6;F.pw[p-1][0]--;fbArm=0}
+  vx=Math.round(vx*100)/100;vy=Math.round(vy*100)/100;
+  const st=F.pos.map(q=>q.slice());const r=simFB(st,k,vx,vy,F.mu,p);
+  F.shot={id:F.shot.id+1,p,k,st,vx,vy,mu:F.mu};
+  if(r.goal){const sc=r.goal;F.g[sc-1]++;
+    event(sc===p?"¡GOOOL de "+nm(sc)+"! "+F.g[0]+" - "+F.g[1]:"¡Gol en propia de "+nm(p)+"! "+F.g[0]+" - "+F.g[1]);
+    F.pos=KICK.map(q=>q.slice());F.mu=0;F.fz=null;F.dbl=0;F.tn=3-sc;
+    if(F.g[sc-1]>=3){F.win=sc;F.sc[sc-1]++;event("¡"+nm(sc)+" gana el partido "+F.g[0]+" - "+F.g[1]+"!")}
+  }else{F.pos=r.end;
+    if(F.mu&&F.mu!==p)F.mu=0;
+    if(F.fz&&F.fz.p===p)F.fz=null;
+    if(F.dbl){F.dbl=0}else F.tn=o}
+  commit();
+}
+const fc=$("#fc"),fbox=$("#fbox");
+function fPt(e){const r=fc.getBoundingClientRect();return[(e.clientX-r.left)/r.width*FW,(e.clientY-r.top)/r.height*FH]}
+fbox.addEventListener("pointerdown",e=>{const F=G.fb;
+  if(!fbMyTurn()){if(!F.win&&both()&&!fbAnim)toast("Es el turno de "+nm(F.tn));return}
+  const pt=fPt(e),p=F.tn;
+  if(fbIce){const o=3-p;for(let k=(o-1)*3;k<o*3;k++){if(Math.hypot(F.pos[k][0]-pt[0],F.pos[k][1]-pt[1])<CR+14){F.fz={p:o,k};F.pw[p-1][3]--;fbIce=false;event(nm(p)+" congela una chapa de "+nm(o));return commit()}}toast("Toca una chapa de "+nm(o));return}
+  let best=-1,bd=1e9;for(let k=(p-1)*3;k<p*3;k++){const d=Math.hypot(F.pos[k][0]-pt[0],F.pos[k][1]-pt[1]);if(d<bd){bd=d;best=k}}
+  if(bd>CR+22){toast("Empieza a arrastrar desde una de tus chapas");return}
+  if(F.fz&&F.fz.p===p&&F.fz.k===best){toast("Esa chapa está congelada");return}
+  fbAim={k:best,c:pt};fbox.setPointerCapture(e.pointerId);drawFB()});
+fbox.addEventListener("pointermove",e=>{if(!fbAim)return;fbAim.c=fPt(e);drawFB()});
+fbox.addEventListener("pointerup",()=>{if(!fbAim)return;const a=fbAim;fbAim=null;const b=G.fb.pos[a.k],dx=b[0]-a.c[0],dy=b[1]-a.c[1],l=Math.hypot(dx,dy);
+  if(l<10){drawFB();return}const pw=Math.min(l,140)/140*14;fbShoot(a.k,dx/l*pw,dy/l*pw)});
+fbox.addEventListener("pointercancel",()=>{fbAim=null;drawFB()});
+$("#fPowers").addEventListener("click",e=>{const b=e.target.closest(".pw");if(!b||b.disabled||!fbMyTurn())return;const k=+b.dataset.k,F=G.fb,p=F.tn;
+  if(k===0){fbArm=fbArm?0:1;return render()}
+  if(k===1){F.dbl=1;F.pw[p-1][1]--;event(nm(p)+" activa Doble turno");return commit()}
+  if(k===2){F.mu=p;F.pw[p-1][2]--;event(nm(p)+" levanta un muro en su portería");return commit()}
+  fbIce=!fbIce;render()});
+$("#fAgain").addEventListener("click",()=>{const f=3-G.fb.first,id=G.fb.shot.id;G.fb=fbFresh(f,G.fb.sc);G.fb.shot.id=id+1;fbLast=id+1;event("Nuevo partido: saca "+nm(f));commit()});
+function drawFB(){
+  const w=fc.clientWidth,h=fc.clientHeight;if(!w)return;const dpr=window.devicePixelRatio||1;
+  if(fc.width!==Math.round(w*dpr)){fc.width=Math.round(w*dpr);fc.height=Math.round(h*dpr)}
+  const c=fc.getContext("2d");c.setTransform(fc.width/FW,0,0,fc.height/FH,0,0);
+  const F=G.fb;
+  for(let i=0;i<10;i++){c.fillStyle=i%2?"#2c9a4e":"#33aa57";c.fillRect(0,i*FH/10,FW,FH/10)}
+  c.strokeStyle="rgba(255,255,255,.85)";c.lineWidth=3;
+  c.strokeRect(6,GLN,FW-12,FH-2*GLN);c.beginPath();c.moveTo(6,FH/2);c.lineTo(FW-6,FH/2);c.stroke();
+  c.beginPath();c.arc(FW/2,FH/2,48,0,7);c.stroke();
+  c.strokeRect(75,GLN,FW-150,70);c.strokeRect(75,FH-GLN-70,FW-150,70);
+  for(const top of[1,0]){const y=top?0:FH-GLN;c.fillStyle="rgba(255,255,255,.16)";c.fillRect(MX0,y,MX1-MX0,GLN);
+    c.strokeStyle="rgba(255,255,255,.4)";c.lineWidth=1;for(let x=MX0;x<=MX1;x+=10){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+GLN);c.stroke()}
+    c.strokeStyle="#fff";c.lineWidth=4;c.beginPath();if(top){c.moveTo(MX0,GLN);c.lineTo(MX0,2);c.lineTo(MX1,2);c.lineTo(MX1,GLN)}else{c.moveTo(MX0,FH-GLN);c.lineTo(MX0,FH-2);c.lineTo(MX1,FH-2);c.lineTo(MX1,FH-GLN)}c.stroke()}
+  const mu=fbAnim?fbAnim.mu:F.mu;if(mu){const m=fbMuro(mu);c.fillStyle=mu===1?"#ff5a4e":"#ffc531";c.fillRect(m[0],m[1]-2,m[2],m[3]+4);c.strokeStyle="#fff";c.lineWidth=2;c.strokeRect(m[0],m[1]-2,m[2],m[3]+4)}
+  const pos=fbAnim?fbAnim.frames[Math.min(fbAnim.i,fbAnim.frames.length-1)]:F.pos;
+  pos.forEach((q,i)=>{if(i===6)return;const p=i<3?1:2;c.fillStyle="rgba(0,0,0,.25)";c.beginPath();c.arc(q[0]+2,q[1]+4,CR,0,7);c.fill();
+    c.fillStyle=p===1?"#ff5a4e":"#ffc531";c.beginPath();c.arc(q[0],q[1],CR,0,7);c.fill();c.strokeStyle="#fff";c.lineWidth=3;c.stroke();
+    c.fillStyle="rgba(255,255,255,.55)";c.beginPath();c.arc(q[0],q[1],CR*.45,0,7);c.fill();
+    if(!fbAnim&&F.fz&&F.fz.k===i){c.strokeStyle="#8fe3ff";c.lineWidth=5;c.beginPath();c.arc(q[0],q[1],CR+4,0,7);c.stroke()}
+    if(!fbAnim&&fbIce&&p!==F.tn){c.strokeStyle="#fff";c.setLineDash([4,4]);c.lineWidth=2;c.beginPath();c.arc(q[0],q[1],CR+7,0,7);c.stroke();c.setLineDash([])}});
+  const bq=pos[6];c.fillStyle="rgba(0,0,0,.25)";c.beginPath();c.arc(bq[0]+2,bq[1]+3,BLR,0,7);c.fill();
+  c.fillStyle="#fff";c.beginPath();c.arc(bq[0],bq[1],BLR,0,7);c.fill();c.fillStyle="#222";c.beginPath();c.arc(bq[0],bq[1],BLR*.4,0,7);c.fill();
+  if(fbAim){const b=F.pos[fbAim.k],dx=b[0]-fbAim.c[0],dy=b[1]-fbAim.c[1],l=Math.hypot(dx,dy);
+    if(l>4){const pw=Math.min(l,140)/140,L=30+pw*120;c.strokeStyle=fbArm?"#e0245e":pw>.8?"#ff3b30":"#fff";c.lineWidth=4;c.setLineDash([8,6]);c.beginPath();c.moveTo(b[0],b[1]);c.lineTo(b[0]+dx/l*L,b[1]+dy/l*L);c.stroke();c.setLineDash([]);
+      c.fillStyle="#fff";c.font="700 16px Fredoka,sans-serif";c.fillText(Math.round(pw*(fbArm?160:100))+"%",b[0]+20,b[1]-18)}}
+}
+function fbTick(){if(!fbAnim)return;fbAnim.i+=2;drawFB();if(fbAnim.i>=fbAnim.frames.length+12){fbAnim=null;render()}else requestAnimationFrame(fbTick)}
+function renderFB(){
+  const F=G.fb;
+  if(fbLast<0)fbLast=F.shot.id;
+  if(F.shot.id!==fbLast){fbLast=F.shot.id;const S=F.shot;if(S.id>0&&(S.vx||S.vy)&&!matchMedia("(prefers-reduced-motion:reduce)").matches){const r=simFB(S.st,S.k,S.vx,S.vy,S.mu,S.p);fbAnim={frames:r.frames,i:0,mu:S.mu};requestAnimationFrame(fbTick)}}
+  const mt=fbMyTurn();
+  $("#fScore").textContent=nm(1)+" "+F.g[0]+" - "+F.g[1]+" "+nm(2);
+  $("#fSide").textContent=local?"":mySlot===1?"Tú atacas hacia arriba":mySlot===2?"Tú atacas hacia abajo":"";
+  const s=$("#fs");
+  s.textContent=!both()?"Esperando a tu pareja… pásale el código":F.win?(F.win===mySlot&&!local?"¡Has ganado el partido!":"¡Gana "+nm(F.win)+"!"):fbAnim?"…":fbIce?"Toca la chapa rival que quieres congelar":local?"Turno de "+nm(F.tn)+(F.tn===1?" (ataca hacia arriba)":" (ataca hacia abajo)"):mt?"Te toca: arrastra una chapa hacia atrás"+(F.dbl?" (doble turno)":""):"Turno de "+nm(F.tn)+"…";
+  s.style.color=F.win?"var(--ink)":F.tn===1?"var(--p1)":"#d99a00";
+  const owner=local?F.tn:mySlot,mine=owner?F.pw[owner-1]:[0,0,0,0];
+  const FPW=[["Supertiro",fbArm],["Doble turno",F.dbl&&F.tn===owner],["Muro",F.mu===owner],["Hielo",fbIce]];
+  const FI=['<svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="var(--hot)"/></svg>',ICON[1],'<svg viewBox="0 0 24 24"><rect x="2" y="9" width="20" height="7" rx="2" fill="currentColor"/></svg>',ICON[2]];
+  $("#fPowers").innerHTML=FPW.map((p,k)=>`<button class="pw${p[1]?" on":""}" data-k="${k}" ${!mine[k]||!mt?"disabled":""}>${FI[k]}${p[0]}<small>${mine[k]?(p[1]?"activado":"1 uso"):"gastado"}</small></button>`).join("");
+  $("#fAgain").classList.toggle("hide",!F.win);
+  drawFB();
+}
+new ResizeObserver(()=>drawFB()).observe(fbox);
+
+// ================= DIBUJA Y ADIVINA =================
+const WORDS=["casa","perro","gato","playa","pizza","avión","coche","sol","luna","árbol","flor","barco","tren","pez","pájaro","montaña","volcán","castillo","pirata","robot","fantasma","dragón","sirena","vaca","cerdo","jirafa","elefante","serpiente","tiburón","pulpo","caracol","abeja","araña","dinosaurio","unicornio","helado","hamburguesa","tarta","plátano","fresa","sandía","huevo frito","paella","churros","palomitas","café","cerveza","vino","guitarra","piano","batería","micrófono","televisión","móvil","ordenador","bombilla","reloj","gafas","sombrero","zapato","calcetín","bikini","paraguas","maleta","cama","sofá","bañera","váter","escalera","puente","semáforo","cohete","ovni","estrella","arcoíris","nube","rayo","nieve","muñeco de nieve","fuego","bomba","espada","corona","anillo","regalo","globo","tienda de campaña","bicicleta","patinete","moto","ambulancia","policía","bombero","médico","astronauta","cocinero","futbolista","boda","beso","corazón","abrazo","selfie","resaca","ronquido","suegra","siesta","pedo","eructo","cosquillas","celos","cita","luna de miel","despedida de soltero","discoteca","karaoke","gimnasio","dieta","pijama","mando de la tele","Netflix","WhatsApp","tatuaje","barba","bigote","calvo","peluca","dentista","vampiro","zombi","bruja","Papá Noel","Reyes Magos","pavo","piñata","sushi","tacos","tortilla","jamón","gazpacho","flamenco","toro","sevillanas","Torre Eiffel","pirámide","iglú","isla desierta"];
+const DWT=80000,INK=1500,DCOL=["#2b1720","#ff4a3d","#2f6bff","#1fa866"];
+const DCH=[];for(let c=35;c<=126;c++)if(c!==92)DCH.push(String.fromCharCode(c));const DIX={};DCH.forEach((ch,i)=>DIX[ch]=i);
+function dwFresh(sc){return{r:0,dr:1,w:"",st:0,t0:0,sc,hl:[2,2],hint:0,res:""}}
+function dwValid(d){return d&&typeof d==="object"&&isInt(d.r,0,1e6)&&isInt(d.dr,1,2)&&typeof d.w==="string"&&d.w.length<=30&&isInt(d.st,0,2)&&typeof d.t0==="number"&&isFinite(d.t0)&&Array.isArray(d.sc)&&d.sc.length===2&&d.sc.every(x=>isInt(x,0,1e6))&&Array.isArray(d.hl)&&d.hl.length===2&&d.hl.every(x=>isInt(x,0,9))&&isInt(d.hint,0,30)&&typeof d.res==="string"&&d.res.length<=90}
+const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9ñ ]/g,"").replace(/\s+/g," ").trim();
+function dwChoices(){const r=seeded((code||"l")+"w"+G.dw.r);const out=[];while(out.length<3){const w=WORDS[Math.floor(r()*WORDS.length)];if(!out.includes(w))out.push(w)}return out}
+let myDraw="",myDrawR=-1,partnerDraw={r:-1,s:""},partnerGuesses=[],myGuesses=[],dwSize=0,dwCol=0,drawing=null,dwLastSend=0;
+function dwIsDrawer(){return!local&&mySlot===G.dw.dr}
+function dwMask(){const D=G.dw,w=D.w,el=Math.floor((Date.now()-D.t0)/1000),auto=el>45?1:0,n=D.hint+auto;
+  const idx=[...w].map((ch,i)=>i).filter(i=>w[i]!==" ");const r=seeded(w+D.r);for(let i=idx.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}
+  const show=new Set(idx.slice(0,Math.min(n,Math.max(0,idx.length-1))));return[...w].map((ch,i)=>ch===" "?"  ":show.has(i)?ch.toUpperCase()+" ":"_ ").join("").trim()}
+$("#dChoices").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!dwIsDrawer()||G.dw.st!==0)return;const D=G.dw;D.w=dwChoices()[+b.dataset.i];D.st=1;D.t0=Date.now();D.hint=0;D.res="";myDraw="";myDrawR=D.r;event(nm(D.dr)+" está dibujando");commit()});
+$("#dGuessF").addEventListener("submit",e=>{e.preventDefault();const D=G.dw,inp=$("#dGuess"),t=inp.value.trim().slice(0,30);if(!t||D.st!==1||dwIsDrawer()||!both())return;inp.value="";
+  if(norm(t)===norm(D.w)){const g=3-D.dr,pts=Math.max(1,3-D.hint);D.sc[g-1]+=pts;D.sc[D.dr-1]+=1;D.st=2;D.res="¡"+nm(g)+" lo ha adivinado! Era: "+D.w;event(D.res);myGuesses=[];commit()}
+  else{myGuesses=myGuesses.concat([t]).slice(-4);send();render()}});
+$("#dHint").addEventListener("click",()=>{const D=G.dw,g=mySlot;if(dwIsDrawer()||D.st!==1||!D.hl[g-1])return;D.hl[g-1]--;D.hint++;event(nm(g)+" pide una pista");commit()});
+$("#dNext").addEventListener("click",()=>{const D=G.dw;if(D.st!==2)return;D.r++;D.dr=3-D.dr;D.st=0;D.w="";D.hint=0;myGuesses=[];event("Ronda "+(D.r+1)+": dibuja "+nm(D.dr));commit()});
+$("#dTools").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const a=b.dataset.a;
+  if(a==="c"){dwCol=+b.dataset.v}else if(a==="s"){dwSize=dwSize?0:1}else if(a==="u"){const k=myDraw.lastIndexOf(" ");myDraw=k>=0?myDraw.slice(0,k):"";dwPush(true)}else if(a==="x"){myDraw="";dwPush(true)}render()});
+function dwPush(force){const now=Date.now();if(force||now-dwLastSend>110){dwLastSend=now;send()}else{clearTimeout(dwPush.t);dwPush.t=setTimeout(()=>{dwLastSend=Date.now();send()},120)}}
+const dc=$("#dc"),dbox=$("#dbox");
+function dPt(e){const r=dc.getBoundingClientRect();return[Math.max(0,Math.min(90,Math.round((e.clientX-r.left)/r.width*90))),Math.max(0,Math.min(90,Math.round((e.clientY-r.top)/r.height*90)))]}
+dbox.addEventListener("pointerdown",e=>{if(!dwIsDrawer()||G.dw.st!==1)return;if(myDraw.length>=INK){toast("Te has quedado sin tinta");return}
+  const p=dPt(e);myDraw+=(myDraw?" ":"")+String(dwCol*2+dwSize)+DCH[p[0]]+DCH[p[1]];drawing=p;dbox.setPointerCapture(e.pointerId);drawDW();dwPush()});
+dbox.addEventListener("pointermove",e=>{if(!drawing)return;const p=dPt(e);if(p[0]===drawing[0]&&p[1]===drawing[1])return;if(myDraw.length>=INK){drawing=null;toast("Te has quedado sin tinta");return}
+  myDraw+=DCH[p[0]]+DCH[p[1]];drawing=p;drawDW();dwPush()});
+const dEnd=()=>{if(drawing){drawing=null;dwPush(true);render()}};dbox.addEventListener("pointerup",dEnd);dbox.addEventListener("pointercancel",dEnd);
+function drawDW(){
+  const w=dc.clientWidth,h=dc.clientHeight;if(!w)return;const dpr=window.devicePixelRatio||1;
+  if(dc.width!==Math.round(w*dpr)){dc.width=Math.round(w*dpr);dc.height=Math.round(h*dpr)}
+  const c=dc.getContext("2d");c.setTransform(dc.width/90,0,0,dc.height/90,0,0);c.fillStyle="#fffdf8";c.fillRect(0,0,90,90);
+  const D=G.dw;const src=dwIsDrawer()?(myDrawR===D.r?myDraw:""):(partnerDraw.r===D.r&&D.st>0?partnerDraw.s:"");
+  if(D.st===0)return;
+  c.lineCap="round";c.lineJoin="round";
+  for(const s of src.split(" ")){if(s.length<3)continue;const h0=+s[0];if(!(h0>=0&&h0<=7))continue;c.strokeStyle=DCOL[h0>>1];c.lineWidth=(h0&1)?2.6:1.1;
+    const pts=[];for(let i=1;i+1<s.length;i+=2){const x=DIX[s[i]],y=DIX[s[i+1]];if(x===undefined||y===undefined)continue;pts.push([x,y])}
+    if(!pts.length)continue;c.beginPath();c.moveTo(pts[0][0],pts[0][1]);
+    if(pts.length===1)c.lineTo(pts[0][0]+.01,pts[0][1]);
+    for(let i=1;i<pts.length;i++){const m=[(pts[i-1][0]+pts[i][0])/2,(pts[i-1][1]+pts[i][1])/2];c.quadraticCurveTo(pts[i-1][0],pts[i-1][1],m[0],m[1])}
+    if(pts.length>1)c.lineTo(pts[pts.length-1][0],pts[pts.length-1][1]);c.stroke()}
+}
+function renderDW(){
+  const D=G.dw,dr=dwIsDrawer(),gs=!local&&mySlot&&mySlot!==D.dr;
+  if(myDrawR!==D.r){myDraw="";myDrawR=D.r}
+  const el=D.st===1?Math.max(0,Math.ceil((DWT-(Date.now()-D.t0))/1000)):0;
+  $("#dTimer").textContent=D.st===1?el+" s":"";
+  $("#dRound").textContent="Ronda "+(D.r+1)+" · dibuja "+nm(D.dr);
+  const s=$("#ds");
+  s.textContent=local?"Este juego necesita dos móviles: uno dibuja y el otro adivina.":!both()?"Esperando a tu pareja… pásale el código":D.st===0?(dr?"Elige qué vas a dibujar":nm(D.dr)+" está eligiendo palabra…"):D.st===1?(dr?"Dibuja: "+D.w.toUpperCase():dwMask()):D.res;
+  s.style.letterSpacing=D.st===1&&!dr?".08em":"normal";
+  const ch=$("#dChoices");ch.classList.toggle("hide",!(dr&&D.st===0&&both()));
+  if(dr&&D.st===0)ch.innerHTML=dwChoices().map((w,i)=>`<button class="btn alt" data-i="${i}"></button>`).join(""),[...ch.children].forEach((b,i)=>b.textContent=dwChoices()[i]);
+  $("#dTools").classList.toggle("hide",!(dr&&D.st===1));
+  $("#dTools").innerHTML=DCOL.map((c,i)=>`<button data-a="c" data-v="${i}" aria-label="Color" style="background:${c};${dwCol===i?"outline:3px solid var(--hot);outline-offset:2px":""}"></button>`).join("")+`<button data-a="s" class="txt">${dwSize?"Gordo":"Fino"}</button><button data-a="u" class="txt">Deshacer</button><button data-a="x" class="txt">Borrar</button>`;
+  $("#dInk").style.width=Math.min(100,myDraw.length/INK*100)+"%";$("#dInkRow").classList.toggle("hide",!(dr&&D.st===1));
+  $("#dGuessF").classList.toggle("hide",!(gs&&D.st===1&&both()));
+  const hb=$("#dHint");hb.textContent="Pista ("+(mySlot?D.hl[mySlot-1]:0)+")";hb.disabled=!(gs&&D.st===1&&mySlot&&D.hl[mySlot-1]>0);
+  const gl=dr?partnerGuesses:myGuesses;$("#dGuesses").textContent=D.st===1&&gl.length?(dr?nm(3-D.dr)+" dice: ":"Has probado: ")+gl.join(", "):"";
+  $("#dNext").classList.toggle("hide",D.st!==2);
+  drawDW();
+}
+new ResizeObserver(()=>drawDW()).observe(dbox);
+setInterval(()=>{if(!G||$("#game").classList.contains("hide"))return;const D=G.dw;
+  if(G.mode==="dw"&&D.st===1){if(Date.now()-D.t0>DWT&&both()){D.st=2;D.res="¡Se acabó el tiempo! Era: "+D.w;event(D.res);commit()}else{$("#dTimer").textContent=Math.max(0,Math.ceil((DWT-(Date.now()-D.t0))/1000))+" s";if(!dwIsDrawer())$("#ds").textContent=dwMask()}}},500);
+
+// ================= CHAT =================
+let myMsgs=[],chatLog=[],chatSeen=new Set(),chatOpen=false,unread=0,msgN=0;
+function chatAdd(slot,ts,t,me){const k=slot+":"+ts+":"+t;if(chatSeen.has(k))return false;chatSeen.add(k);chatLog.push({slot,ts,t,me});chatLog.sort((a,b)=>a.ts-b.ts);if(chatLog.length>200)chatLog.shift();return true}
+function chatSend(t){t=t.trim().slice(0,100);if(!t||!R)return;const ts=Date.now();myMsgs=myMsgs.concat([[ts,t]]).slice(-5);chatAdd(mySlot||0,ts,t,true);send();renderChat()}
+function chatIn(slot,list){if(!Array.isArray(list))return;let nw=0;for(const m of list){if(!Array.isArray(m)||typeof m[0]!=="number"||typeof m[1]!=="string")continue;if(chatAdd(slot,m[0],m[1].slice(0,100),false))nw++}
+  if(nw&&!chatOpen){unread+=nw;const last=chatLog[chatLog.length-1];toast(nm(slot)+": "+last.t)}if(nw)renderChat()}
+function renderChat(){$("#chatBtn").classList.toggle("hide",!R);const n=$("#chatN");n.textContent=unread;n.classList.toggle("hide",!unread);
+  const L=$("#chatList");L.innerHTML="";if(!chatLog.length){const p=document.createElement("p");p.className="muted";p.textContent="Aún no hay mensajes. ¡Di algo bonito (o pica a tu pareja)!";L.appendChild(p)}
+  for(const m of chatLog){const d=document.createElement("div");d.className="msg"+(m.me?" me":"");const b=document.createElement("b");b.textContent=m.me?"Tú":nm(m.slot);d.appendChild(b);d.appendChild(document.createTextNode(m.t));L.appendChild(d)}
+  L.scrollTop=L.scrollHeight}
+$("#chatBtn").addEventListener("click",()=>{chatOpen=true;unread=0;$("#chat").classList.remove("hide");renderChat();$("#chatIn").focus()});
+$("#chatClose").addEventListener("click",()=>{chatOpen=false;$("#chat").classList.add("hide");renderChat()});
+$("#chatF").addEventListener("submit",e=>{e.preventDefault();const i=$("#chatIn");chatSend(i.value);i.value=""});
+$("#chatQuick").addEventListener("click",e=>{const b=e.target.closest("button");if(b)chatSend(b.textContent)});
+// ================= CARTAS CAOS =================
+const UCOL={r:"#ff4a3d",y:"#f5b400",g:"#1fa866",b:"#2f6bff"};
+const UNAME={r:"Rojo",y:"Amarillo",g:"Verde",b:"Azul"};
+const ULAB={s:"Salta",r:"Gira",d:"+2",w:"Color",f:"+4",x:"Cambio",e:"Espejo",t:"Ladrón"};
+const cardsOf=s=>s.match(/../g)||[];
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function uFresh(first,sc){
+  const d=[];for(const c of "rygb"){d.push(c+"0");for(const v of "123456789srd"){d.push(c+v,c+v)}}
+  for(const v of "wwwwffffxxeett")d.push("k"+v);
+  shuf(d);const h=[d.splice(0,7).join(""),d.splice(0,7).join("")];
+  let i=d.findIndex(c=>/[0-9]/.test(c[1]));const top=d.splice(i,1)[0];
+  return{d:"",h,top,p:"",c:top[0],turn:first,first,pend:0,pk:"",drew:false,said:0,cat:0,win:0,sc}
+}
+const cardsRe=/^([rygbk][0-9srdwfxet])*$/;
+function uValid(u){return u&&typeof u==="object"&&typeof u.d==="string"&&u.d.length<=240&&cardsRe.test(u.d)&&Array.isArray(u.h)&&u.h.length===2&&u.h.every(h=>typeof h==="string"&&h.length<=240&&cardsRe.test(h))&&typeof u.top==="string"&&/^[rygbk][0-9srdwfxet]$/.test(u.top)&&typeof u.p==="string"&&u.p.length<=240&&cardsRe.test(u.p)&&/^[rygb]$/.test(u.c)&&isInt(u.turn,1,2)&&isInt(u.first,1,2)&&isInt(u.pend,0,99)&&["","d","f"].includes(u.pk)&&typeof u.drew==="boolean"&&isInt(u.said,0,2)&&isInt(u.cat,0,2)&&isInt(u.win,0,2)&&Array.isArray(u.sc)&&u.sc.length===2&&u.sc.every(n=>isInt(n,0,1e6))}
+const UDECK=(()=>{const d=[];for(const c of "rygb"){d.push(c+"0");for(const v of "123456789srd"){d.push(c+v,c+v)}}for(const v of "wwwwffffxxeett")d.push("k"+v);return d})();
+function uDraw(p,n){const U=G.u;for(let k=0;k<n;k++){if(U.h[p-1].length>=200)break;U.h[p-1]+=UDECK[Math.floor(Math.random()*UDECK.length)]}return n}
+function uCan(c){const U=G.u;if(U.pend>0)return(c[1]==="d"&&U.pk==="d")||c[1]==="f"||c[1]==="e";return c[0]==="k"||c[0]===U.c||c[1]===U.top[1]}
+function uMyTurn(){return both()&&!G.u.win&&(local||G.u.turn===mySlot)}
+function uMissCatch(me){if(G.u.cat&&G.u.cat!==me)G.u.cat=0}
+function uNext(){const U=G.u;U.turn=3-U.turn;U.drew=false;U.said=0}
+let uSel=-1,uPeekTurn=-1;
+function uPlay(idx,col){
+  const U=G.u,me=U.turn,opp=3-me,hand=cardsOf(U.h[me-1]),c=hand[idx];if(!c||!uCan(c))return;
+  uMissCatch(me);
+  hand.splice(idx,1);U.h[me-1]=hand.join("");U.top=c;U.c=c[0]==="k"?col:c[0];
+  const v=c[1];let again=false,msg="";
+  if(v==="s"||v==="r"){again=true;msg=nm(me)+" vuelve a tirar"}
+  else if(v==="d"){U.pend+=2;U.pk="d";msg=nm(opp)+" va a robar "+U.pend}
+  else if(v==="f"){U.pend+=4;U.pk="f";msg=nm(opp)+" va a robar "+U.pend}
+  else if(v==="x"){const t=U.h[0];U.h[0]=U.h[1];U.h[1]=t;msg="¡Cambio de manos!"}
+  else if(v==="t"){const h=shuf(cardsOf(U.h[me-1]));const give=h.splice(0,2);U.h[me-1]=h.join("");U.h[opp-1]+=give.join("");msg=nm(me)+" le endosa "+give.length+" cartas a "+nm(opp)}
+  else if(v==="e"){msg=U.pend?"¡Espejo! "+nm(opp)+" se come el "+U.pend:nm(me)+" cambia a "+UNAME[U.c]}
+  else if(v==="w")msg=nm(me)+" cambia a "+UNAME[U.c];
+  if(msg)event(msg);
+  if(!U.h[me-1]){U.win=me;U.sc[me-1]++;event("¡"+nm(me)+" se queda sin cartas y gana!");return commit()}
+  if(cardsOf(U.h[me-1]).length===1&&U.said!==me){U.cat=me}
+  if(!again)uNext();else{U.drew=false}
+  uSel=-1;commit();
+}
+$("#uHand").addEventListener("click",e=>{const b=e.target.closest(".uc");if(!b)return;
+  if(!uMyTurn()){toast(G.u.win?"Partida terminada":both()?"Es el turno de "+nm(G.u.turn):"Espera a tu pareja");return}
+  const i=+b.dataset.i,c=cardsOf(G.u.h[G.u.turn-1])[i];
+  if(!uCan(c)){toast(G.u.pend?"Roba "+G.u.pend+" o tira un +2, +4 o Espejo":"Esa carta no se puede tirar");return}
+  if(c[0]==="k"){uSel=uSel===i?-1:i;return render()}
+  uPlay(i)});
+$("#uPick").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||uSel<0)return;uPlay(uSel,b.dataset.c)});
+$("#uDeck").addEventListener("click",()=>{const U=G.u;if(!uMyTurn())return;const me=U.turn;uMissCatch(me);
+  if(U.pend>0){const n=U.pend;uDraw(me,n);U.pend=0;U.pk="";event(nm(me)+" roba "+n+" cartas");uNext();return commit()}
+  if(U.drew){toast("Ya has robado: tira o pasa");return}
+  if(!uDraw(me,1)){toast("No quedan cartas");return}U.drew=true;commit()});
+$("#uPass").addEventListener("click",()=>{if(!uMyTurn()||!G.u.drew)return;uMissCatch(G.u.turn);uNext();commit()});
+$("#uUno").addEventListener("click",()=>{if(!uMyTurn())return;G.u.said=G.u.turn;event("¡"+nm(G.u.turn)+" dice UNO!");commit()});
+$("#uCatch").addEventListener("click",()=>{const U=G.u;if(!U.cat||U.win)return;const p=U.cat;uDraw(p,2);U.cat=0;event("¡Pillado! "+nm(p)+" no dijo UNO y roba 2");commit()});
+$("#uAgain").addEventListener("click",()=>{const f=3-G.u.first;G.u=uFresh(f,G.u.sc);uSel=-1;event("Nueva partida de cartas: empieza "+nm(f));commit()});
+$("#uPeek").addEventListener("click",()=>{uPeekTurn=G.u.turn;render()});
+function cardHTML(c,i,cls){const v=c[1],lab=ULAB[v]||v;return `<div class="uc ${c[0]}${lab.length>2?" sm":""}${cls||""}"${i>=0?` data-i="${i}" role="button" tabindex="0"`:""}>${lab}</div>`}
+function renderU(){
+  const U=G.u;const viewer=local?U.turn:mySlot;const opp=viewer?3-viewer:2;
+  $("#uOppName").textContent=local?"":nm(opp);
+  const on=cardsOf(U.h[opp-1]).length;$("#uBacks").innerHTML=local?"":Array.from({length:Math.min(on,12)},()=>'<div class="uc back"></div>').join("");
+  $("#uOppN").textContent=local?"Pasaos el móvil en cada turno":on+(on===1?" carta":" cartas");
+  $("#uDeckN").textContent="Mazo infinito";
+  $("#uTop").innerHTML=cardHTML(U.top,-1," big");$("#uCol").style.background=UCOL[U.c];
+  const mt=uMyTurn();
+  const hidden=local&&uPeekTurn!==U.turn&&!U.win;
+  $("#uGate").classList.toggle("hide",!hidden);
+  const hand=viewer?cardsOf(U.h[viewer-1]):[];
+  $("#uHand").innerHTML=hidden?"":hand.map((c,i)=>cardHTML(c,i,(mt&&!uCan(c)?" no":"")+(uSel===i?" sel":""))).join("");
+  if(!mt)uSel=-1;
+  const pk=$("#uPick");pk.classList.toggle("hide",uSel<0);pk.innerHTML=Object.keys(UCOL).map(k=>`<button data-c="${k}" style="background:${UCOL[k]}">${UNAME[k]}</button>`).join("");
+  const s=$("#us");
+  s.textContent=!both()?"Esperando a tu pareja… pásale el código":U.win?(U.win===mySlot&&!local?"¡Has ganado!":"¡Gana "+nm(U.win)+"!"):local?"Turno de "+nm(U.turn)+(U.pend?": roba "+U.pend+" o defiéndete":""):mt?(U.pend?"Te toca: roba "+U.pend+" o defiéndete":U.drew?"Tira una carta o pasa":"Te toca: tira o roba"):"Turno de "+nm(U.turn)+"…";
+  s.style.color=U.win?"var(--ink)":U.turn===1?"var(--p1)":"#d99a00";
+  $("#uDeck").textContent=U.pend&&mt?"Robar "+U.pend:"Robar";
+  $("#uPass").classList.toggle("hide",!(mt&&U.drew&&!U.pend));
+  $("#uUno").classList.toggle("hide",!(mt&&hand.length===2&&U.said!==U.turn));
+  $("#uCatch").classList.toggle("hide",!(U.cat&&!U.win&&(local||U.cat!==mySlot)&&both()));
+  if(U.cat)$("#uCatch").textContent="¡"+nm(U.cat)+" no ha dicho UNO!";
+  $("#uAgain").classList.toggle("hide",!U.win);
+}
+
+// ================= MINIGOLF CAOS =================
+const GW=360,GH=540,BR=7,HR=10;
+const HOLES=[
+{s:[180,480],h:[180,80],w:[[110,260,140,20]],sa:[],wa:[]},
+{s:[90,480],h:[290,90],w:[[200,190,160,350]],sa:[[40,60,120,80]],wa:[]},
+{s:[300,480],h:[60,70],w:[[0,150,250,18],[110,330,250,18]],sa:[[0,380,90,90]],wa:[]},
+{s:[180,490],h:[180,70],w:[[160,130,40,14]],sa:[[60,200,240,80]],wa:[[0,330,140,60],[220,330,140,60]]},
+{s:[60,490],h:[180,60],w:[[0,260,150,20],[210,260,150,20],[100,120,160,16]],sa:[[130,380,100,60]],wa:[[250,380,110,70]]},
+{s:[180,500],h:[180,70],w:[[60,140,40,40],[260,140,40,40],[160,220,40,40],[60,310,40,40],[260,310,40,40]],sa:[],wa:[[140,390,80,40]]}
+];
+function gFresh(first,sc){const s=HOLES[0].s;return{h:0,b:[[s[0],s[1],0],[s[0],s[1],0]],s:[0,0],t:[0,0],tn:first,first,pw:[[2,2,2],[2,2,2]],shot:{id:0,p:1,h:0,x:0,y:0,vx:0,vy:0,m:0,g:0},win:0,sc}}
+function gValid(g){const n=x=>typeof x==="number"&&isFinite(x)&&x>=-50&&x<=600;return g&&typeof g==="object"&&isInt(g.h,0,6)&&Array.isArray(g.b)&&g.b.length===2&&g.b.every(b=>Array.isArray(b)&&b.length===3&&n(b[0])&&n(b[1])&&isInt(b[2],0,1))&&[g.s,g.t,g.sc].every(a=>Array.isArray(a)&&a.length===2&&a.every(x=>isInt(x,0,1e6)))&&isInt(g.tn,1,2)&&isInt(g.first,1,2)&&Array.isArray(g.pw)&&g.pw.length===2&&g.pw.every(a=>Array.isArray(a)&&a.length===3&&a.every(x=>isInt(x,0,9)))&&g.shot&&isInt(g.shot.id,0,1e9)&&isInt(g.shot.p,1,2)&&isInt(g.shot.h,0,5)&&["x","y","vx","vy"].every(k=>typeof g.shot[k]==="number"&&isFinite(g.shot[k])&&Math.abs(g.shot[k])<1000)&&isInt(g.shot.m,0,1)&&isInt(g.shot.g,0,1)&&isInt(g.win,0,3)}
+const inR=(x,y,r)=>x>=r[0]&&x<=r[0]+r[2]&&y>=r[1]&&y<=r[1]+r[3];
+function simulate(hi,x,y,vx,vy,mag,ghost){
+  const H=HOLES[hi],walls=ghost?[]:H.w,path=[];const x0=x,y0=y;
+  for(let step=0;step<3000;step++){
+    for(let k=0;k<4;k++){x+=vx/4;y+=vy/4;
+      if(x<BR){x=BR;vx=-vx*.8}if(x>GW-BR){x=GW-BR;vx=-vx*.8}if(y<BR){y=BR;vy=-vy*.8}if(y>GH-BR){y=GH-BR;vy=-vy*.8}
+      for(const r of walls){const nx=Math.max(r[0],Math.min(x,r[0]+r[2])),ny=Math.max(r[1],Math.min(y,r[1]+r[3]));let dx=x-nx,dy=y-ny;const d=Math.hypot(dx,dy);
+        if(d<BR){if(d===0){const l=x-r[0],rr=r[0]+r[2]-x,t=y-r[1],b=r[1]+r[3]-y,m=Math.min(l,rr,t,b);if(m===l){x=r[0]-BR;vx=-Math.abs(vx)}else if(m===rr){x=r[0]+r[2]+BR;vx=Math.abs(vx)}else if(m===t){y=r[1]-BR;vy=-Math.abs(vy)}else{y=r[1]+r[3]+BR;vy=Math.abs(vy)}}
+          else{dx/=d;dy/=d;x=nx+dx*BR;y=ny+dy*BR;const dot=vx*dx+vy*dy;if(dot<0){vx-=2*dot*dx;vy-=2*dot*dy;vx*=.82;vy*=.82}}}}
+    }
+    path.push([x,y]);
+    for(const r of H.wa)if(inR(x,y,r))return{path,x:x0,y:y0,in:0,water:1};
+    const dh=Math.hypot(H.h[0]-x,H.h[1]-y),sp=Math.hypot(vx,vy);
+    if(mag&&dh<80&&dh>0){vx+=(H.h[0]-x)/dh*.45;vy+=(H.h[1]-y)/dh*.45}
+    if(dh<(mag?15:HR)&&sp<(mag?9:5.5)){path.push([H.h[0],H.h[1]]);return{path,x:H.h[0],y:H.h[1],in:1,water:0}}
+    const f=H.sa.some(r=>inR(x,y,r))?.93:.985;vx*=f;vy*=f;
+    if(Math.hypot(vx,vy)<.06)break;
+  }
+  return{path,x,y,in:0,water:0};
+}
+let gArm={m:0,g:0},gAim=null,gAnim=null,gLastShot=-1;
+function gMyTurn(){return both()&&!G.gf.win&&!gAnim&&(local||G.gf.tn===mySlot)}
+function gNextHole(){const F=G.gf;F.h++;
+  if(F.h>=HOLES.length){F.h=HOLES.length-1;F.win=F.t[0]<F.t[1]?1:F.t[1]<F.t[0]?2:3;if(F.win<3)F.sc[F.win-1]++;event(F.win<3?"¡"+nm(F.win)+" gana el recorrido con "+F.t[F.win-1]+" golpes!":"¡Empate en el recorrido!");F.h=6;return}
+  const s=HOLES[F.h].s;F.b=[[s[0],s[1],0],[s[0],s[1],0]];F.s=[0,0];F.tn=((F.h+F.first)%2)+1;event("Hoyo "+(F.h+1)+": empieza "+nm(F.tn))}
+function gShoot(vx,vy){
+  const F=G.gf,p=F.tn,o=3-p,b=F.b[p-1];const m=gArm.m,g=gArm.g;
+  if(m)F.pw[p-1][0]--;if(g)F.pw[p-1][1]--;gArm={m:0,g:0};
+  vx=Math.round(vx*100)/100;vy=Math.round(vy*100)/100;const r=simulate(F.h,b[0],b[1],vx,vy,m,g);r.x=r1(r.x);r.y=r1(r.y);
+  F.shot={id:F.shot.id+1,p,h:F.h,x:b[0],y:b[1],vx,vy,m,g};
+  F.s[p-1]++;F.t[p-1]++;
+  if(r.water){F.s[p-1]++;F.t[p-1]++;event("¡Al agua! "+nm(p)+" suma un golpe de castigo")}
+  F.b[p-1]=[r.x,r.y,r.in];
+  if(r.in)event(F.s[p-1]===1?"¡HOYO EN UNO de "+nm(p)+"!":nm(p)+" mete la bola en "+F.s[p-1]+" golpes");
+  else if(F.s[p-1]>=8){F.b[p-1][2]=1;event(nm(p)+" llega a 8 golpes y recoge la bola")}
+  if(F.b[0][2]&&F.b[1][2])gNextHole();
+  else F.tn=F.b[o-1][2]?p:o;
+  commit();
+}
+const gc=$("#gc"),golf=$("#golf");
+function gPt(e){const r=gc.getBoundingClientRect();return[(e.clientX-r.left)/r.width*GW,(e.clientY-r.top)/r.height*GH]}
+golf.addEventListener("pointerdown",e=>{if(!gMyTurn()||G.gf.h>5){if(!G.gf.win&&both()&&!gAnim)toast("Es el turno de "+nm(G.gf.tn));return}gAim={a:gPt(e),c:gPt(e)};golf.setPointerCapture(e.pointerId);drawGolf()});
+golf.addEventListener("pointermove",e=>{if(!gAim)return;gAim.c=gPt(e);drawGolf()});
+const gRelease=()=>{if(!gAim)return;const dx=gAim.a[0]-gAim.c[0],dy=gAim.a[1]-gAim.c[1],l=Math.hypot(dx,dy);gAim=null;
+  if(l<8){drawGolf();return}const pw=Math.min(l,160)/160*13;gShoot(dx/l*pw,dy/l*pw)};
+golf.addEventListener("pointerup",gRelease);golf.addEventListener("pointercancel",()=>{gAim=null;drawGolf()});
+$("#gPowers").addEventListener("click",e=>{const b=e.target.closest(".pw");if(!b||b.disabled||!gMyTurn())return;const k=+b.dataset.k,F=G.gf,p=F.tn;
+  if(k===0){gArm.m=gArm.m?0:1;return render()}if(k===1){gArm.g=gArm.g?0:1;return render()}
+  const o=3-p;if(F.b[o-1][2]){toast(nm(o)+" ya ha metido la bola");return}const s=HOLES[F.h].s;F.b[o-1]=[s[0],s[1],0];F.pw[p-1][2]--;event("¡"+nm(p)+" manda a "+nm(o)+" a la salida!");commit()});
+$("#gAgain").addEventListener("click",()=>{const f=3-G.gf.first;G.gf=gFresh(f,G.gf.sc);G.gf.shot.id=gLastShot+1;gLastShot=G.gf.shot.id;event("Nuevo recorrido: empieza "+nm(f));commit()});
+function rr(c,x,y,w,h,r){c.beginPath();c.roundRect?c.roundRect(x,y,w,h,r):c.rect(x,y,w,h)}
+function drawGolf(){
+  const w=gc.clientWidth,h=gc.clientHeight;if(!w)return;const dpr=window.devicePixelRatio||1;
+  if(gc.width!==Math.round(w*dpr)){gc.width=Math.round(w*dpr);gc.height=Math.round(h*dpr)}
+  const c=gc.getContext("2d");c.setTransform(gc.width/GW,0,0,gc.height/GH,0,0);
+  const F=G.gf,hi=gAnim?gAnim.h:Math.min(F.h,5),H=HOLES[hi];
+  for(let i=0;i<12;i++){c.fillStyle=i%2?"#2e9a52":"#34a85a";c.fillRect(0,i*GH/12,GW,GH/12)}
+  for(const r of H.sa){c.fillStyle="#f0d58c";rr(c,r[0],r[1],r[2],r[3],18);c.fill()}
+  for(const r of H.wa){c.fillStyle="#3aa7e8";rr(c,r[0],r[1],r[2],r[3],14);c.fill();c.strokeStyle="rgba(255,255,255,.5)";c.lineWidth=2;c.beginPath();c.moveTo(r[0]+14,r[1]+r[3]/2);c.quadraticCurveTo(r[0]+r[2]/2,r[1]+r[3]/2-8,r[0]+r[2]-14,r[1]+r[3]/2);c.stroke()}
+  const ghost=gAnim?gAnim.g:gArm.g;
+  for(const r of H.w){c.globalAlpha=ghost?.35:1;c.fillStyle="#6b3f22";rr(c,r[0],r[1]+3,r[2],r[3],5);c.fill();c.fillStyle="#9a5f36";rr(c,r[0],r[1],r[2],r[3]-3,5);c.fill();c.globalAlpha=1}
+  c.fillStyle="#0d2a17";c.beginPath();c.arc(H.h[0],H.h[1],HR,0,7);c.fill();
+  if(gAnim?gAnim.m:gArm.m){c.strokeStyle="rgba(255,255,255,.35)";c.setLineDash([4,6]);c.beginPath();c.arc(H.h[0],H.h[1],80,0,7);c.stroke();c.setLineDash([])}
+  c.strokeStyle="#fff";c.lineWidth=2;c.beginPath();c.moveTo(H.h[0],H.h[1]);c.lineTo(H.h[0],H.h[1]-34);c.stroke();
+  c.fillStyle="#e0245e";c.beginPath();c.moveTo(H.h[0],H.h[1]-34);c.lineTo(H.h[0]+20,H.h[1]-28);c.lineTo(H.h[0],H.h[1]-22);c.fill();
+  const balls=[];
+  for(const p of[1,2]){let b=F.b[p-1];
+    if(gAnim&&gAnim.p===p){const q=gAnim.path[Math.min(gAnim.i,gAnim.path.length-1)];b=[q[0],q[1],0]}
+    else if(gAnim&&gAnim.h!==F.h)continue;
+    if(b[2])continue;balls.push([p,b])}
+  if(balls.length===2&&Math.hypot(balls[0][1][0]-balls[1][1][0],balls[0][1][1]-balls[1][1][1])<4){balls[0][1]=[balls[0][1][0]-8,balls[0][1][1]];balls[1][1]=[balls[1][1][0]+8,balls[1][1][1]]}
+  for(const[p,b]of balls){c.fillStyle="rgba(0,0,0,.25)";c.beginPath();c.arc(b[0]+2,b[1]+3,BR,0,7);c.fill();
+    c.fillStyle=p===1?"#ff5a4e":"#ffc531";c.beginPath();c.arc(b[0],b[1],BR,0,7);c.fill();c.strokeStyle="#fff";c.lineWidth=2;c.stroke()}
+  if(gAim){const b=F.b[F.tn-1],dx=gAim.a[0]-gAim.c[0],dy=gAim.a[1]-gAim.c[1],l=Math.hypot(dx,dy);
+    if(l>4){const pw=Math.min(l,160)/160,L=30+pw*110;c.strokeStyle=pw>.8?"#ff3b30":"#fff";c.lineWidth=4;c.setLineDash([8,6]);c.beginPath();c.moveTo(b[0],b[1]);c.lineTo(b[0]+dx/l*L,b[1]+dy/l*L);c.stroke();c.setLineDash([]);
+      c.fillStyle="#fff";c.font="700 16px Fredoka,sans-serif";c.fillText(Math.round(pw*100)+"%",b[0]+12,b[1]-12)}}
+}
+function gTick(){if(!gAnim)return;gAnim.i+=3;drawGolf();if(gAnim.i>=gAnim.path.length+10){gAnim=null;render()}else requestAnimationFrame(gTick)}
+function renderG(){
+  const F=G.gf;
+  if(gLastShot<0)gLastShot=F.shot.id;
+  if(F.shot.id!==gLastShot){gLastShot=F.shot.id;const S=F.shot;if(S.id>0&&(S.vx||S.vy)){const r=simulate(S.h,S.x,S.y,S.vx,S.vy,S.m,S.g);const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;if(!reduce){gAnim={path:r.path,i:0,p:S.p,h:S.h,m:S.m,g:S.g};requestAnimationFrame(gTick)}}}
+  const hn=Math.min(F.h,5)+1;$("#gHole").textContent=F.win?"Recorrido terminado":"Hoyo "+hn+" de 6";
+  $("#gStrokes").textContent="Golpes: "+nm(1)+" "+F.t[0]+" · "+nm(2)+" "+F.t[1];
+  const s=$("#gs"),mt=gMyTurn();
+  s.textContent=!both()?"Esperando a tu pareja… pásale el código":F.win?(F.win===3?"¡Empate!":F.win===mySlot&&!local?"¡Has ganado el recorrido!":"¡Gana "+nm(F.win)+"!"):gAnim?"…":local?"Turno de "+nm(F.tn)+" ("+F.s[F.tn-1]+" golpes en este hoyo)":mt?"Te toca: arrastra para apuntar":"Turno de "+nm(F.tn)+"…";
+  s.style.color=F.win?"var(--ink)":F.tn===1?"var(--p1)":"#d99a00";
+  const owner=local?F.tn:mySlot,mine=owner?F.pw[owner-1]:[0,0,0];
+  const GPW=[["Imán",gArm.m],["Fantasma",gArm.g],["Al inicio",0]];
+  const GI=['<svg viewBox="0 0 24 24" fill="none" stroke="var(--hot)" stroke-width="3.4"><path d="M6 4v8a6 6 0 0 0 12 0V4"/></svg>','<svg viewBox="0 0 24 24"><path d="M5 21V11a7 7 0 0 1 14 0v10l-3-2-2 2-2-2-2 2-2-2z" fill="currentColor" opacity=".55"/></svg>','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/></svg>'];
+  $("#gPowers").innerHTML=GPW.map((p,k)=>`<button class="pw${p[1]?" on":""}" data-k="${k}" ${!mine[k]||!mt?"disabled":""}>${GI[k]}${p[0]}<small>${mine[k]?(p[1]?"activado":"quedan "+mine[k]):"gastado"}</small></button>`).join("");
+  $("#gAgain").classList.toggle("hide",!F.win);
+  drawGolf();
+}
+new ResizeObserver(()=>drawGolf()).observe(golf);
+const PW=[["Bomba","gasta turno"],["Doble","2 fichas"],["Hielo","congela"],["Cambiazo","gasta turno"]];
+const ICON=[
+'<svg viewBox="0 0 24 24"><circle cx="11" cy="14" r="7" fill="currentColor"/><path d="M15 8l3-3" stroke="currentColor" stroke-width="2"/><circle cx="19.5" cy="4" r="2" fill="var(--hot)"/></svg>',
+'<svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="6" fill="var(--p1)"/><circle cx="16" cy="12" r="6" fill="var(--p2)"/></svg>',
+'<svg viewBox="0 0 24 24" stroke="var(--ice)" stroke-width="2.4" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7"/></svg>',
+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9h13l-3-3M20 15H7l3 3"/></svg>'];
+let roomApi=null,R=null,code="",mySlot=0,myPeer="",local=false,joinedAt=0,aim=-1;
+let nick="";try{nick=localStorage.getItem("tyy-nick")||""}catch(e){}
+$("#nick").value=nick;
+const names={1:"",2:""},picks={1:null,2:null};
+let myPick=null,order=[],orderKey="";
+const fresh=()=>({seq:0,by:"",mode:"c4",b:"0".repeat(42),turn:1,first:1,win:0,line:[],sc:[0,0],pw:[[1,1,1,1],[1,1,1,1]],frz:null,dbl:0,mv:0,used:false,ev:"",evn:0,qi:0,qc:"all",hits:0,qd:0,u:uFresh(1,[0,0]),gf:gFresh(1,[0,0]),fb:fbFresh(1,[0,0]),dw:dwFresh([0,0])});
+let G=fresh();
+
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.remove("hide");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.add("hide"),2400)}
+function net(t,on){const e=$("#net");e.textContent=t;e.classList.toggle("on",!!on)}
+function seeded(s){let h=1779033703;for(const c of s)h=Math.imul(h^c.charCodeAt(0),3432918353)>>>0;return()=>{h=Math.imul(h^h>>>15,2246822507)>>>0;h=Math.imul(h^h>>>13,3266489909)>>>0;return((h^=h>>>16)>>>0)/4294967296}}
+function getOrder(){const k=(code||"local")+G.qc;if(k!==orderKey){orderKey=k;const r=seeded(k);order=QS.map((q,i)=>i).filter(i=>G.qc==="all"||QS[i][2]===QCAT[G.qc]);for(let i=order.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[order[i],order[j]]=[order[j],order[i]]}}return order}
+
+const isInt=(n,a,b)=>Number.isInteger(n)&&n>=a&&n<=b;
+function valid(g){return g&&typeof g==="object"&&typeof g.seq==="number"&&typeof g.b==="string"&&/^[012]{42}$/.test(g.b)&&(g.turn===1||g.turn===2)&&(g.first===1||g.first===2)&&isInt(g.win,0,3)&&Array.isArray(g.line)&&g.line.length<=42&&g.line.every(n=>isInt(n,0,41))&&Array.isArray(g.sc)&&g.sc.length===2&&g.sc.every(n=>isInt(n,0,1e6))&&Array.isArray(g.pw)&&g.pw.length===2&&g.pw.every(a=>Array.isArray(a)&&a.length===4&&a.every(n=>isInt(n,0,9)))&&(g.frz===null||(g.frz&&isInt(g.frz.p,1,2)&&isInt(g.frz.c,0,6)))&&isInt(g.dbl,0,1)&&isInt(g.mv,0,1e6)&&typeof g.used==="boolean"&&typeof g.ev==="string"&&g.ev.length<=90&&isInt(g.evn,0,1e9)&&["c4","q","u","gf","fb","dw"].includes(g.mode)&&["all","normal","hot","fire","vf"].includes(g.qc)&&isInt(g.qi,0,1e6)&&isInt(g.hits,0,1e6)&&isInt(g.qd,0,1e6)&&uValid(g.u)&&gValid(g.gf)&&fbValid(g.fb)&&dwValid(g.dw)}
+
+const enc=new TextEncoder();
+function send(){if(!R)return;const o={nick:nick.slice(0,16),slot:mySlot,g:G,pick:myPick,ch:myMsgs.slice(),gu:myGuesses.slice(),dr:{r:myDrawR,s:G.mode==="dw"&&dwIsDrawer()?myDraw:""}};
+  let len=()=>enc.encode(JSON.stringify(o)).length;
+  while(len()>3900&&o.ch.length)o.ch.shift();
+  if(len()>3900)o.dr.s=o.dr.s.slice(0,Math.max(0,o.dr.s.length-(len()-3900)));
+  R.presence(o).catch(()=>{})}
+function commit(){G.seq++;G.by=myPeer;if(local)mySlot=curTurn();send();render()}
+function curTurn(){return G.mode==="u"?G.u.turn:G.mode==="gf"?G.gf.tn:G.mode==="fb"?G.fb.tn:G.turn}
+
+function onPeers(ch){
+  const ps=ch.peers.filter(p=>p.kind==="viewer");
+  const me=ps.find(p=>p.sameTab);if(me)myPeer=me.peer;
+  const others=ps.filter(p=>!p.sameTab);
+  const taken={};for(const p of others){const s=p.presence&&p.presence.slot;if(s===1||s===2){if(!taken[s]||p.peer<taken[s])taken[s]=p.peer}}
+  let changed=false;
+  if(mySlot&&taken[mySlot]&&taken[mySlot]<myPeer){mySlot=0;changed=true}
+  if(!mySlot&&Date.now()-joinedAt>900){const f=[1,2].find(s=>!taken[s]);if(f){mySlot=f;changed=true}}
+  names[1]="";names[2]="";picks[1]=null;picks[2]=null;
+  if(mySlot){names[mySlot]=nick;picks[mySlot]=myPick}
+  for(const p of others){const pr=p.presence||{};const s=pr.slot;
+    if((s===1||s===2)&&taken[s]===p.peer){names[s]=typeof pr.nick==="string"?pr.nick.slice(0,16):"";
+      const k=pr.pick;picks[s]=k&&Number.isInteger(k.i)&&Number.isInteger(k.v)?{i:k.i,v:k.v}:null;
+      const dd=pr.dr;if(dd&&Number.isInteger(dd.r)&&typeof dd.s==="string")partnerDraw={r:dd.r,s:dd.s.slice(0,4000)};
+      partnerGuesses=Array.isArray(pr.gu)?pr.gu.filter(x=>typeof x==="string").map(x=>x.slice(0,30)).slice(-4):[];
+      chatIn(s,pr.ch)}
+    const g=pr.g;if(valid(g)&&(g.seq>G.seq||(g.seq===G.seq&&String(g.by)<String(G.by)))){G=JSON.parse(JSON.stringify(g));changed=true}
+  }
+  if(changed)send();
+  render();
+}
+function peerCount(){return R?R.peers().filter(p=>p.kind==="viewer"&&(p.sameTab||p.presence&&(p.presence.slot===1||p.presence.slot===2))).length:1}
+function both(){return local||(mySlot>0&&names[1]!==""&&names[2]!==""&&peerCount()>=2)}
+function nm(s){return names[s]||(s===mySlot&&nick)||("Jugador "+s)}
+function myTurn(){return both()&&!G.win&&(local||G.turn===mySlot)}
+
+async function enter(c){
+  nick=$("#nick").value.trim().slice(0,16);
+  if(!nick){$("#nick").focus();toast("Pon tu nombre primero");return}
+  try{localStorage.setItem("tyy-nick",nick)}catch(e){}
+  
+  $("#lobbyMsg").textContent="Conectando…";
+  try{net("Conectando…");R=await roomApi.join("tyy-"+c)}catch(e){net("Sin conectar");$("#lobbyMsg").textContent="No he podido conectar. Revisa que tienes internet y vuelve a intentarlo. Mientras, podéis jugar en un solo móvil.";$("#localBtn").classList.remove("hide");return}
+  $("#lobbyMsg").textContent="";
+  code=c;local=false;mySlot=0;G=fresh();myPick=null;aim=-1;joinedAt=Date.now();
+  try{location.hash=c}catch(e){}
+  R.onPeers(onPeers,()=>net("Sin conexión"));
+  R.onConnection(on=>net(on?"Conectado":"Reconectando…",on));
+  send();setTimeout(()=>{if(R)onPeers({peers:R.peers()})},1000);
+  show();
+}
+function show(){$("#lobby").classList.add("hide");$("#game").classList.remove("hide");$("#codeShow").textContent=local?"Local":code.toUpperCase();$("#copy").classList.toggle("hide",local);render()}
+
+$("#create").addEventListener("click",()=>{let c="";for(let i=0;i<6;i++)c+=ALPH[Math.floor(Math.random()*ALPH.length)];enter(c)});
+$("#join").addEventListener("click",()=>{const c=$("#code").value.trim().toLowerCase();if(!/^[a-z0-9]{6}$/.test(c)){toast("El código tiene 6 letras");return}enter(c)});
+$("#code").addEventListener("keydown",e=>{if(e.key==="Enter")$("#join").click()});
+$("#localBtn").addEventListener("click",()=>{nick=$("#nick").value.trim().slice(0,16)||"Jugador 1";local=true;code="";mySlot=1;G=fresh();names[1]=nick;names[2]="Pareja";show()});
+$("#copy").addEventListener("click",()=>{const link=location.origin+location.pathname+"#"+code;
+  if(navigator.share){navigator.share({title:"Tú y yo",text:"Entra a jugar conmigo, sala "+code.toUpperCase(),url:link}).catch(()=>{});return}
+  try{navigator.clipboard.writeText(link).then(()=>toast("Enlace copiado"),()=>toast("Código: "+code.toUpperCase()))}catch(e){toast("Código: "+code.toUpperCase())}});
+$("#leave").addEventListener("click",()=>{if(R){R.leave().catch(()=>{});R=null}chatOpen=false;$("#chat").classList.add("hide");$("#chatBtn").classList.add("hide");local=false;mySlot=0;net("Sin conectar");$("#game").classList.add("hide");$("#lobby").classList.remove("hide")});
+for(const b of document.querySelectorAll(".tabs button"))b.addEventListener("click",()=>{const m=b.dataset.m;if(G.mode!==m){G.mode=m;commit()}});
+
+// ---------- Conecta 4 Caos ----------
+function winLine(b,idx){const p=b[idx];if(p==="0")return null;const r=Math.floor(idx/7),c=idx%7;
+  for(const[dr,dc]of[[0,1],[1,0],[1,1],[1,-1]]){const L=[idx];
+    for(const s of[1,-1]){let rr=r+dr*s,cc=c+dc*s;while(rr>=0&&rr<6&&cc>=0&&cc<7&&b[rr*7+cc]===p){L.push(rr*7+cc);rr+=dr*s;cc+=dc*s}}
+    if(L.length>=4)return L}return null}
+function gravity(arr){for(let c=0;c<7;c++){const col=[];for(let r=5;r>=0;r--)if(arr[r*7+c]!=="0")col.push(arr[r*7+c]);for(let r=5,k=0;r>=0;r--,k++)arr[r*7+c]=col[k]||"0"}}
+function event(t){G.ev=t.slice(0,90);G.evn++}
+function check(actor){const L={};for(let i=0;i<42;i++){const l=winLine(G.b,i);if(l&&!L[G.b[i]])L[G.b[i]]=l}
+  const w=L[actor]?actor:L[3-actor]?3-actor:0;
+  if(w){G.win=w;G.line=L[w];G.sc[w-1]++;if(L[1]&&L[2])event("¡Doble 4 en raya! Gana "+nm(actor)+" por provocar el caos");return true}
+  if(!G.b.includes("0")){G.win=3;G.line=[];return true}return false}
+function endTurn(){G.used=false;G.dbl=0;if(G.frz&&G.frz.p===G.turn)G.frz=null;G.turn=3-G.turn}
+function drop(c){
+  const t=G.turn;
+  if(G.frz&&G.frz.p===t&&G.frz.c===c){toast("Esa columna está congelada");return}
+  let r=5;while(r>=0&&G.b[r*7+c]!=="0")r--;if(r<0){toast("Columna llena");return}
+  const arr=G.b.split("");arr[r*7+c]=String(t);G.mv++;
+  let quake=false;
+  if(G.mv%8===0){for(let i=35;i<42;i++)arr[i]="0";gravity(arr);quake=true;event("¡Terremoto! La fila de abajo se ha hundido")}
+  G.b=arr.join("");
+  if(G.mv%11===0){const lost=G.pw[t-1].map((v,i)=>v?-1:i).filter(i=>i>=0);if(lost.length){const k=lost[G.mv%lost.length];G.pw[t-1][k]=1;event("Lluvia de estrellas: "+nm(t)+" recupera "+PW[k][0])}}
+  if(quake)shakeNext=true;
+  if(check(t))return commit();
+  if(G.dbl>0){G.dbl=0;toast("Pon tu segunda ficha")}else endTurn();
+  commit();
+}
+let shakeNext=false;
+$("#board").addEventListener("click",e=>{const t=e.target.closest(".cell");if(!t)return;
+  if(!myTurn()){if(G.win)return;toast(both()?"Es el turno de "+nm(G.turn):"Espera a que entre tu pareja");return}
+  const i=+t.dataset.i,c=i%7,me=G.turn,opp=3-me,v=G.b[i];
+  if(aim===0){if(v==="0"){toast("Elige una ficha para reventar");return}
+    const arr=G.b.split("");arr[i]="0";gravity(arr);G.b=arr.join("");G.pw[me-1][0]=0;aim=-1;shakeNext=true;event(nm(me)+" ha lanzado una bomba");
+    if(!check(me))endTurn();return commit()}
+  if(aim===3){if(v!==String(opp)){toast("Elige una ficha de "+nm(opp));return}
+    const arr=G.b.split("");arr[i]=String(me);G.b=arr.join("");G.pw[me-1][3]=0;aim=-1;event(nm(me)+" ha hecho un cambiazo");
+    if(!check(me))endTurn();return commit()}
+  if(aim===2){G.frz={p:opp,c};G.pw[me-1][2]=0;G.used=true;aim=-1;event(nm(me)+" congela la columna "+(c+1)+". Ahora tira");return commit()}
+  drop(c)});
+$("#powers").addEventListener("click",e=>{const b=e.target.closest(".pw");if(!b||b.disabled)return;const k=+b.dataset.k;
+  if(!myTurn())return;
+  if(aim===k){aim=-1;return render()}
+  if(k===1){G.dbl=1;G.used=true;G.pw[G.turn-1][1]=0;aim=-1;event(nm(G.turn)+" activa Doble: pone dos fichas");return commit()}
+  aim=k;render()});
+$("#again").addEventListener("click",()=>{const f=3-G.first,sc=G.sc,keep={mode:G.mode,qi:G.qi,qc:G.qc,hits:G.hits,qd:G.qd,seq:G.seq,evn:G.evn,u:G.u,gf:G.gf,fb:G.fb,dw:G.dw};G=Object.assign(fresh(),keep,{sc,first:f,turn:f});aim=-1;event("Nueva partida: empieza "+nm(f));commit()});
+
+let lastB="",lastEvn=-1;
+function renderC4(){
+  const nb=G.b;let newIdx=-1;
+  if(lastB&&lastB!==nb){for(let i=0;i<42;i++)if(lastB[i]==="0"&&nb[i]!=="0")newIdx=i}
+  lastB=nb;
+  if(!myTurn())aim=-1;
+  const me=G.turn,opp=3-me;
+  const tg=i=>aim===0?nb[i]!=="0":aim===3?nb[i]===String(opp):aim===2;
+  const bd=$("#board");bd.classList.toggle("aim",aim>=0);
+  bd.innerHTML=[...nb].map((v,i)=>`<button class="cell${v==="1"?" a":v==="2"?" b":""}${i===newIdx?" new":""}${G.line.includes(i)?" w":""}${G.frz&&G.frz.c===i%7&&v==="0"?" ice":""}${aim>=0&&tg(i)?" tg":""}" data-i="${i}" aria-label="Columna ${i%7+1}"></button>`).join("");
+  if(shakeNext||(G.ev.startsWith("¡Terremoto")&&G.evn!==renderC4.sh)){renderC4.sh=G.evn;shakeNext=false;const h=$("#housing");h.classList.remove("shake");void h.offsetWidth;h.classList.add("shake")}
+  const s=$("#c4s");
+  if(!both())s.textContent="Esperando a tu pareja… pásale el código";
+  else if(G.win===3)s.textContent="¡Empate! Tablero lleno";
+  else if(G.win)s.textContent=(G.win===mySlot&&!local?"¡Has ganado!":"¡Gana "+nm(G.win)+"!");
+  else if(G.dbl)s.textContent=(local?nm(me):(myTurn()?"Tú":nm(me)))+": dos fichas este turno";
+  else s.textContent=local?"Turno de "+nm(me):(myTurn()?"Te toca":"Turno de "+nm(me)+"…");
+  s.style.color=G.win===1||(!G.win&&me===1)?"var(--p1)":G.win===2||(!G.win&&me===2)?"#d99a00":"var(--ink)";
+  // poderes: los míos (en local, los de quien juega)
+  const owner=local?me:mySlot;const mine=owner?G.pw[owner-1]:[0,0,0,0];
+  $("#powers").innerHTML=PW.map((p,k)=>`<button class="pw${aim===k?" on":""}" data-k="${k}" ${!mine[k]||!myTurn()||G.used||G.dbl?"disabled":""}>${ICON[k]}${p[0]}<small>${mine[k]?p[1]:"gastado"}</small></button>`).join("");
+  const at=$("#aimTxt");
+  at.textContent=aim===0?"Toca la ficha que quieres reventar (o toca Bomba otra vez para cancelar)":aim===3?"Toca una ficha de "+nm(opp)+" para quedártela":aim===2?"Toca la columna que quieres congelar":G.frz&&myTurn()&&G.frz.p===me?"La columna "+(G.frz.c+1)+" está congelada para ti este turno":owner?"Tus poderes":"";
+  $("#again").classList.toggle("hide",!G.win);
+}
+
+// ---------- ¿Coincidimos? ----------
+const CATS=[["all","Todas"],["normal","Normales"],["hot","Picantes"],["fire","Muy picantes"],["vf","Verdadero o falso"]];
+function curIdx(){const o=getOrder();return o[G.qi%o.length]}
+function revealed(){return picks[1]&&picks[2]&&picks[1].i===G.qi&&picks[2].i===G.qi}
+$("#cats").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;const c=b.dataset.c;if(c===G.qc)return;G.qc=c;G.qi=0;myPick=null;commit()});
+$("#opts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b||local)return;if(revealed())return;
+  if(!both()){toast("Espera a que entre tu pareja");return}
+  myPick={i:G.qi,v:+b.dataset.v};if(mySlot)picks[mySlot]=myPick;send();render()});
+$("#next").addEventListener("click",()=>{if(!revealed())return;const m=picks[1].v===picks[2].v?1:0;G.hits+=m;G.qd++;G.qi++;myPick=null;commit()});
+const opTxt=o=>o.replace(/@1/g,nm(1)).replace(/@2/g,nm(2));
+function renderQ(){
+  if(myPick&&myPick.i!==G.qi)myPick=null;
+  $("#cats").innerHTML=CATS.map(([c,t])=>`<button class="chip${c==="hot"?" hotc":c==="fire"?" firec":""}${G.qc===c?" on":""}" data-c="${c}">${t}</button>`).join("");
+  const idx=curIdx(),[q,os,cat]=QS[idx],hot=cat===1||cat===2;
+  $("#qn").textContent="Pregunta "+(G.qd+1);
+  const qt=$("#qt");qt.textContent=opTxt(q);if(cat){const t=document.createElement("span");t.className="tag";t.textContent=["","Picante","Muy picante","V o F"][cat];if(cat===3)t.style.background="var(--box)";qt.appendChild(t)}
+  const rev=revealed();
+  const box=$("#opts");box.innerHTML="";
+  os.forEach((o,v)=>{const b=document.createElement("button");b.className="opt"+(myPick&&myPick.v===v?" me":"");b.dataset.v=v;
+    const sp=document.createElement("span");sp.textContent=opTxt(o);b.appendChild(sp);
+    if(rev){const w=document.createElement("span");w.className="who";for(const s of[1,2])if(picks[s].v===v){const i=document.createElement("i");i.style.background=s===1?"var(--p1)":"var(--p2)";i.title=nm(s);w.appendChild(i)}b.appendChild(w)}
+    box.appendChild(b)});
+  const res=$("#qres");res.innerHTML="";
+  if(rev){const d=document.createElement("div");const y=picks[1].v===picks[2].v;d.className="res "+(y?"y":"n");d.textContent=y?"¡Coincidís!":"No coincidís… ¡a debatir!";
+    if(!y&&hot){const sm=document.createElement("small");sm.textContent=cat===2?RETOS_F[(G.qi*7+idx)%RETOS_F.length]:RETOS[(G.qi*7+idx)%RETOS.length];d.appendChild(sm)}
+    res.appendChild(d)}
+  const other=mySlot===1?2:1;
+  $("#qwait").textContent=local?"Este juego necesita dos móviles: cada uno responde en secreto en el suyo.":!both()?"Esperando a tu pareja…":rev?"":myPick?"Respuesta guardada. Esperando a "+nm(other)+"…":(cat===3?"¿Verdadero o falso? Responded en secreto: si no estáis de acuerdo, a debatir.":"Elige en secreto. Se verá cuando respondáis los dos.")+(hot?" Si no coincidís, toca reto.":"");
+  $("#next").classList.toggle("hide",!rev);
+  const pct=G.qd?Math.round(G.hits/G.qd*100):0;
+  $("#hitsTxt").textContent=G.qd?"Coincidís en "+G.hits+" de "+G.qd+" ("+pct+"%)":"Aún no habéis respondido ninguna";
+  $("#hitsBar").style.width=pct+"%";
+}
+
+function renderPlayers(){
+  const box=$("#players");box.innerHTML="";
+  for(const s of[1,2]){const d=document.createElement("div");const gm=G.mode,tw=gm==="u"?[G.u.turn,G.u.win]:gm==="gf"?[G.gf.tn,G.gf.win]:gm==="fb"?[G.fb.tn,G.fb.win]:gm==="dw"?[G.dw.dr,0]:[G.turn,G.win];d.className="pl"+(gm!=="q"&&!tw[1]&&tw[0]===s&&both()?" turn":"");d.style.color=s===1?"var(--p1)":"var(--p2)";
+    const i=document.createElement("i");i.style.background=s===1?"var(--p1)":"var(--p2)";d.appendChild(i);
+    const w=document.createElement("div");const n=document.createElement("div");n.className="n";
+    const present=local||s===mySlot||names[s]!=="";n.textContent=present?nm(s):"Esperando…";w.appendChild(n);
+    const sm=document.createElement("small");sm.textContent=!local&&s===mySlot?"tú":present?"conectado":"sin entrar";w.appendChild(sm);d.appendChild(w);
+    const sc=document.createElement("span");sc.className="s";sc.textContent=(G.mode==="u"?G.u.sc:G.mode==="gf"?G.gf.sc:G.mode==="fb"?G.fb.sc:G.mode==="dw"?G.dw.sc:G.sc)[s-1];d.appendChild(sc);box.appendChild(d)}
+}
+function render(){
+  if($("#game").classList.contains("hide"))return;
+  renderPlayers();
+  const m=G.mode;for(const b of document.querySelectorAll(".tabs button"))b.classList.toggle("on",b.dataset.m===m);
+  $("#pC4").classList.toggle("hide",m!=="c4");$("#pQ").classList.toggle("hide",m!=="q");$("#pU").classList.toggle("hide",m!=="u");$("#pG").classList.toggle("hide",m!=="gf");$("#pF").classList.toggle("hide",m!=="fb");$("#pD").classList.toggle("hide",m!=="dw");
+  const ev=$("#ev");if(G.evn!==lastEvn){ev.textContent=G.ev;ev.classList.remove("pop");void ev.offsetWidth;ev.classList.add("pop");lastEvn=G.evn}
+  renderC4();renderQ();renderU();renderG();renderFB();renderDW();renderChat();
+}
+
+try{const h=location.hash.slice(1);if(/^[a-z0-9]{6}$/i.test(h))$("#code").value=h.toUpperCase()}catch(e){}
+roomApi={join:mqttJoin};$("#localBtn").classList.remove("hide");
+if(/^#[a-z0-9]{6}$/i.test(location.hash))$("#lobbyMsg").textContent="Te han invitado a una sala: pon tu nombre y pulsa Unirme.";
+}
+</script>
+</body>
+</html>
