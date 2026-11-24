@@ -186,6 +186,7 @@ label{display:block;font-weight:800;margin-bottom:6px}
       <span class="muted" style="margin:0">Sala</span><b id="codeShow"></b>
       <button class="btn alt sm" id="copy">Copiar enlace</button>
     </div>
+    <p class="muted" id="diag" style="margin:-6px 0 10px;font-size:13px"></p>
     <div class="players" id="players"></div>
     <div class="tabs six" role="tablist">
       <button id="tC4" class="on" role="tab" data-m="c4">Conecta 4</button>
@@ -335,7 +336,7 @@ label{display:block;font-weight:800;margin-bottom:6px}
 <script>
 {
 // ===== Conexión entre móviles: MQTT público + cifrado con el código de sala =====
-const BROKERS=window.TYY_BROKERS||["wss://broker.emqx.io:8084/mqtt","wss://broker.hivemq.com:8884/mqtt"];
+const BROKERS=window.TYY_BROKERS||["wss://broker.emqx.io:8084/mqtt","wss://broker.hivemq.com:8884/mqtt","wss://test.mosquitto.org:8081/mqtt"];
 const SALT="tuyyo-v1-9d3k";
 function loadMqtt(){if(window.mqtt)return Promise.resolve(window.mqtt);return new Promise((ok,ko)=>{const s=document.createElement("script");s.src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js";s.onload=()=>window.mqtt?ok(window.mqtt):ko(new Error("mqtt"));s.onerror=()=>ko(new Error("mqtt"));document.head.appendChild(s)})}
 const b64e=u=>{let s="";for(const x of u)s+=String.fromCharCode(x);return btoa(s)};
@@ -343,41 +344,43 @@ const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function deriveKey(code){const raw=await crypto.subtle.importKey("raw",new TextEncoder().encode(code),"PBKDF2",false,["deriveKey"]);
   return crypto.subtle.deriveKey({name:"PBKDF2",salt:new TextEncoder().encode(SALT),iterations:60000,hash:"SHA-256"},raw,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
 async function topicHash(code){const h=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(SALT+"|"+code));return b64e(new Uint8Array(h)).replace(/[^a-zA-Z0-9]/g,"").slice(0,22)}
-function tryConnect(mq,url,opts){return new Promise((ok,ko)=>{const c=mq.connect(url,Object.assign({connectTimeout:7000,reconnectPeriod:0},opts));
-  const fail=e=>{c.removeAllListeners&&c.removeAllListeners();try{c.end(true)}catch(_){}ko(e||new Error("fail"))};c.once("connect",()=>ok(c));c.once("error",fail);setTimeout(()=>fail(new Error("timeout")),8000)})}
 async function mqttJoin(name){
   const mq=await loadMqtt();const key=await deriveKey(name);const base="tuyyo/"+await topicHash(name);
   const myId=Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>b.toString(36)).join("").slice(0,12);
   const myTopic=base+"/p/"+myId;const opts={clientId:"tyy_"+myId,clean:true,keepalive:20,will:{topic:myTopic,payload:"",retain:true,qos:0}};
-  let client=null,lastErr;
-  for(const u of BROKERS){try{client=await tryConnect(mq,u,opts);client.__url=u;break}catch(e){lastErr=e}}
-  if(!client)throw lastErr||new Error("no broker");
-  client.options.reconnectPeriod=2000;
+  // Se conecta a TODOS los servidores a la vez y usa los que respondan, así los dos móviles siempre coinciden en alguno
+  const clients=BROKERS.map(u=>{const c=mq.connect(u,Object.assign({connectTimeout:8000,reconnectPeriod:3000},opts));c.__url=u;return c});
+  const anyConn=()=>clients.some(c=>c.connected);
+  await new Promise((ok,ko)=>{let fails=0;const t=setTimeout(()=>anyConn()?ok():ko(new Error("timeout")),12000);
+    for(const c of clients){c.once("connect",()=>{clearTimeout(t);ok()});c.on("error",()=>{if(++fails>=clients.length&&!anyConn()){/* sigue reintentando */}})}});
   const peers=new Map();let mine={},listeners=[],connL=[],snap=[],conn=true,pubT=null,lastPub=0;
   const build=()=>{const now=Date.now();snap=[{peer:myId,by:null,isMe:true,sameTab:true,kind:"viewer",guest:false,presence:mine,updatedAt:now}];
-    for(const[id,v]of peers){if(now-v.t>65000)continue;snap.push({peer:id,by:null,isMe:false,sameTab:false,kind:"viewer",guest:false,presence:v.p,updatedAt:v.at})}snap.sort((a,b)=>a.peer<b.peer?-1:1);return snap};
+    for(const[id,v]of peers){if(now-v.t>180000)continue;snap.push({peer:id,by:null,isMe:false,sameTab:false,kind:"viewer",guest:false,presence:v.p,updatedAt:v.at})}snap.sort((a,b)=>a.peer<b.peer?-1:1);return snap};
   const fire=()=>{build();for(const f of listeners)try{f({peers:snap,joined:[],left:[],updated:[]})}catch(e){console.error(e)}};
   async function publish(){lastPub=Date.now();const iv=crypto.getRandomValues(new Uint8Array(12));
     const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(JSON.stringify({p:mine,t:Date.now()}))));
-    const out=new Uint8Array(12+ct.length);out.set(iv);out.set(ct,12);if(client.connected)client.publish(myTopic,b64e(out),{retain:true,qos:0})}
+    const out=new Uint8Array(12+ct.length);out.set(iv);out.set(ct,12);const msg=b64e(out);for(const c of clients)if(c.connected)c.publish(myTopic,msg,{retain:true,qos:0});stats.sent++}
   const schedule=()=>{if(pubT)return;const wait=Math.max(0,90-(Date.now()-lastPub));pubT=setTimeout(()=>{pubT=null;publish().catch(()=>{})},wait)};
-  client.on("message",async(topic,buf)=>{const id=topic.split("/").pop();if(id===myId)return;const txt=buf.toString();
+  const stats={sent:0,got:0,servers:0};
+  const onMsg=async(topic,buf)=>{const id=topic.split("/").pop();if(id===myId)return;const txt=buf.toString();
     if(!txt){if(peers.delete(id))fire();return}
     try{const raw=b64d(txt);const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:raw.slice(0,12)},key,raw.slice(12));const m=JSON.parse(new TextDecoder().decode(pt));
       if(!m||typeof m!=="object"||typeof m.t!=="number"||!m.p||typeof m.p!=="object")return;
-      if(Date.now()-m.t>65000){return}
-      peers.set(id,{p:m.p,t:m.t,at:Date.now()});fire()}catch(e){}});
-  client.on("connect",()=>{conn=true;client.subscribe(base+"/p/+");schedule();connL.forEach(f=>f(true))});
-  client.on("close",()=>{if(conn){conn=false;connL.forEach(f=>f(false))}});
-  client.subscribe(base+"/p/+");
+      if(Date.now()-m.t>180000){return}
+      const old=peers.get(id);if(old&&old.t>m.t)return;
+      stats.got++;peers.set(id,{p:m.p,t:m.t,at:Date.now()});fire()}catch(e){}};
+  const conState=()=>{const now=anyConn();stats.servers=clients.filter(c=>c.connected).length;if(now!==conn){conn=now;connL.forEach(f=>f(now))}};
+  for(const c of clients){c.on("message",onMsg);c.on("connect",()=>{c.subscribe(base+"/p/+");conState();lastPub=0;publish().catch(()=>{})});c.on("close",conState);c.on("offline",conState);if(c.connected){c.subscribe(base+"/p/+")}}
+  conState();
   const hb=setInterval(()=>{publish().catch(()=>{});fire()},20000);
   return{name,
     presence:async patch=>{for(const k in patch){if(patch[k]===null)delete mine[k];else mine[k]=patch[k]}schedule();fire()},
     onPeers:fn=>{listeners.push(fn);setTimeout(()=>fn({peers:build(),joined:[],left:[],updated:[]}),0);return()=>{listeners=listeners.filter(f=>f!==fn)}},
     peers:()=>build(),
-    connected:()=>client.connected,
-    onConnection:fn=>{connL.push(fn);setTimeout(()=>fn(client.connected),0);return()=>{connL=connL.filter(f=>f!==fn)}},
-    leave:async()=>{clearInterval(hb);clearTimeout(pubT);try{client.publish(myTopic,"",{retain:true});setTimeout(()=>client.end(),300)}catch(e){}listeners=[];connL=[]},
+    connected:()=>anyConn(),
+    stats:()=>({servers:clients.filter(c=>c.connected).length,total:clients.length,sent:stats.sent,got:stats.got,peers:peers.size}),
+    onConnection:fn=>{connL.push(fn);setTimeout(()=>fn(anyConn()),0);return()=>{connL=connL.filter(f=>f!==fn)}},
+    leave:async()=>{clearInterval(hb);clearTimeout(pubT);for(const c of clients){try{if(c.connected)c.publish(myTopic,"",{retain:true});setTimeout(()=>c.end(),300)}catch(e){}}listeners=[];connL=[]},
     emit:async()=>{},on:()=>()=>{}};
 }
 
@@ -1193,7 +1196,8 @@ function render(){
 }
 
 try{const h=location.hash.slice(1);if(/^[a-z0-9]{6}$/i.test(h))$("#code").value=h.toUpperCase()}catch(e){}
-roomApi={join:mqttJoin};$("#localBtn").classList.remove("hide");
+roomApi={join:mqttJoin};
+setInterval(()=>{const d=$("#diag");if(!R||!R.stats){d.textContent="";return}const st=R.stats();d.textContent="Conexión: "+st.servers+"/"+st.total+" servidores · "+(st.peers?"pareja conectada":"esperando a tu pareja")+" · enviados "+st.sent+" · recibidos "+st.got},2000);$("#localBtn").classList.remove("hide");
 if(/^#[a-z0-9]{6}$/i.test(location.hash))$("#lobbyMsg").textContent="Te han invitado a una sala: pon tu nombre y pulsa Unirme.";
 }
 </script>
